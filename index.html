@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>おもいで商店 入退店</title>
-
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   </head>
   <body>
@@ -14,17 +13,15 @@
     <button id="btnOut" disabled>退店</button>
 
     <script>
-      // ===== 設定 =====
+      // LIFFアプリのID
       const LIFF_ID = "2008818718-xTQWF4uO";
 
-      // ★ dev ではなく exec を使う ★
+      // あなたが送ってくれたGASのexec URL
       const GAS_EXEC_URL =
-        "https://script.google.com/macros/s/AKfycbz349Qb4iJCwTjJge3qow4BY8YvMQXXfO80V0iQvNXARIFAafT_AberzQLitmD__PZBXg/exec"
+        "https://script.google.com/macros/s/AKfycbxxEci4NNbGoguXMKcES1IWXPFBiIU8bIaImZagb9dbR3jBjccVaIANBIZxYG568KEjDg/exec";
 
-      // ★ GAS側と完全一致させる ★
-      const SHARED_KEY = "omoidestore_2026_01_key_9h3f2k";
-
-      // =================
+      // setup()で保存したSHARED_KEYと完全一致させる
+      const SHARED_KEY = "    IFTTT_KEY: 'dfVO5gdRgoTwnrYDj03RPb',";
 
       function setStatus(msg) {
         document.getElementById("status").textContent = msg;
@@ -72,10 +69,12 @@
             liffId: LIFF_ID,
             withLoginOnExternalBrowser: true
           });
+
           setStatus("準備OK。入店または退店を押してください。");
           enableButtons(true);
         } catch (e) {
-          setStatus("LIFF初期化エラー（Endpoint URLを確認）");
+          setStatus("LIFF初期化エラー。Endpoint URLがGitHub Pagesになっているか確認してください。");
+          enableButtons(false);
         }
       }
 
@@ -91,7 +90,7 @@
             "&t=" + Date.now();
 
           const res = await jsonp(url);
-          setStatus(res.message || "完了");
+          setStatus(res && res.message ? res.message : "完了");
         } catch (e) {
           setStatus("通信エラーまたはタイムアウト");
         } finally {
