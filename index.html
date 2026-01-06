@@ -13,15 +13,12 @@
     <button id="btnOut" disabled>退店</button>
 
     <script>
-      // LIFFアプリのID
       const LIFF_ID = "2008818718-xTQWF4uO";
 
-      // あなたが送ってくれたGASのexec URL
       const GAS_EXEC_URL =
-        "https://script.google.com/macros/s/AKfycbxxEci4NNbGoguXMKcES1IWXPFBiIU8bIaImZagb9dbR3jBjccVaIANBIZxYG568KEjDg/exec";
+        "https://script.google.com/macros/s/AKfycbwXL18mJZETBx5y7-rRXKrisdq9P2LNUDmVkuQNMeblW7ACH9FdGDllpXsbGTj8WASJ0g/exec";
 
-      // setup()で保存したSHARED_KEYと完全一致させる
-      const SHARED_KEY = "    IFTTT_KEY: 'dfVO5gdRgoTwnrYDj03RPb',";
+      const SHARED_KEY = "cw_omoidestore_2026_01_N8mQ3qvZp6H7k2Yd4T1s9R5bX0aC";
 
       function setStatus(msg) {
         document.getElementById("status").textContent = msg;
@@ -35,6 +32,7 @@
       function jsonp(url) {
         return new Promise((resolve, reject) => {
           const cb = "cb_" + Math.random().toString(36).slice(2);
+
           window[cb] = (data) => {
             cleanup();
             resolve(data);
@@ -73,7 +71,7 @@
           setStatus("準備OK。入店または退店を押してください。");
           enableButtons(true);
         } catch (e) {
-          setStatus("LIFF初期化エラー。Endpoint URLがGitHub Pagesになっているか確認してください。");
+          setStatus("LIFF初期化エラー。Endpoint URL が GitHub Pages になっているか確認してください。");
           enableButtons(false);
         }
       }
