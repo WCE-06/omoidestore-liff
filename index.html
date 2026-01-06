@@ -1,1 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>おもいで商店 入退店</title>
 
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  </head>
+  <body>
+    <h2 id="status">初期化中...</h2>
+
+    <button id="btnIn" disabled>入店</button>
+    <button id="btnOut" disabled>退店</button>
+
+    <script>
+      const LIFF_ID = "2008818718-xTQWF4uO";
+      const GAS_ENDPOINT = "ここにGASの /exec URL を貼る";
+
+      function setStatus(msg) {
+        document.getElementById("status").textContent = msg;
+      }
+
+      function enableButtons(f) {
+        document.getElementById("btnIn").disabled = !f;
+        document.getElementById("btnOut").disabled = !f;
+      }
+
+      async function init() {
+        try {
+          await liff.init({
+            liffId: LIFF_ID,
+            withLoginOnExternalBrowser: true
+          });
+
+          setStatus("準備OK。入店または退店を押してください");
+          enableButtons(true);
+        } catch (e) {
+          setStatus("LIFF初期化エラー");
+        }
+      }
+
+      async function callGAS(action) {
+        enableButtons(false);
+        setStatus(action === "in" ? "入店処理中..." : "退店処理中...");
+
+        try {
+          const res = await fetch(GAS_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action })
+          });
+          const json = await res.json();
+          setStatus(json.message || "完了");
+        } catch (e) {
+          setStatus("通信エラー");
+        } finally {
+          enableButtons(true);
+        }
+      }
+
+      document.getElementById("btnIn").onclick = () => callGAS("in");
+      document.getElementById("btnOut").onclick = () => callGAS("out");
+
+      init();
+    </script>
+  </body>
+</html>
