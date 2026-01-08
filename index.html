@@ -1,48 +1,547 @@
 <!doctype html>
-<html>
+<html lang="ja">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>おもいで商店 入退店</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  </head>
-  <body>
-    <h2 id="status">初期化中...</h2>
+    <style>
+      :root{
+        --bg:#0b0f1a;
+        --card:#121a2b;
+        --text:#e7ecff;
+        --muted:#aab6da;
+        --line:#1e2a48;
+        --good:#1db954;
+        --warn:#f4c542;
+        --bad:#ff5a6a;
+        --shadow: 0 10px 30px rgba(0,0,0,.35);
+        --radius: 18px;
+      }
+      *{box-sizing:border-box}
+      body{
+        margin:0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", Arial, sans-serif;
+        background:
+          radial-gradient(1200px 700px at 30% -10%, #1a2a6c33, transparent),
+          radial-gradient(900px 500px at 120% 20%, #b21f1f22, transparent),
+          var(--bg);
+        color:var(--text);
+        min-height:100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+      }
+      .app{ width:min(560px, 100%); }
+      .card{
+        background: linear-gradient(180deg, #141d33, var(--card));
+        border: 1px solid rgba(255,255,255,.08);
+        box-shadow: var(--shadow);
+        border-radius: var(--radius);
+        padding: 18px;
+      }
+      .header{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        margin-bottom:12px;
+      }
+      .title{
+        font-size: 18px;
+        margin:0;
+        letter-spacing: .02em;
+      }
+      .badge{
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.14);
+        color: var(--muted);
+        background: rgba(255,255,255,.04);
+        white-space:nowrap;
+      }
 
-    <button id="btnIn" disabled>入店</button>
-    <button id="btnOut" disabled>退店</button>
+      .status{
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(255,255,255,.04);
+        border-radius: 14px;
+        padding: 12px;
+        margin: 12px 0 16px;
+      }
+      .statusRow{
+        display:flex;
+        align-items:flex-start;
+        gap:10px;
+      }
+      .dot{
+        width:10px; height:10px; border-radius:999px;
+        margin-top:7px;
+        background: var(--warn);
+        box-shadow: 0 0 0 4px rgba(244,197,66,.18);
+        flex:0 0 auto;
+      }
+
+      .i18nBlock{ line-height:1.45; }
+      .i18n-ja{ font-size: 15px; color: var(--text); font-weight: 650; }
+      .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
+      .i18n-sub div{ font-size: 12px; color: var(--muted); }
+
+      .actions{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      button{
+        appearance:none;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: var(--text);
+        border-radius: 16px;
+        padding: 14px 12px;
+        cursor: pointer;
+        transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+        user-select:none;
+      }
+      button:active{ transform: translateY(1px); }
+      button:disabled{ opacity:.55; cursor:not-allowed; }
+
+      .btnLabel{ display:flex; align-items:center; justify-content:center; gap:10px; }
+      .btnText{ text-align:center; }
+      .btnText .ja{ font-size: 16px; font-weight: 750; }
+      .btnText .sub{
+        margin-top:6px;
+        display:grid;
+        gap:4px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height:1.2;
+      }
+
+      .btnIn{
+        border-color: rgba(29,185,84,.35);
+        background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
+      }
+      .btnOut{
+        border-color: rgba(170,182,218,.25);
+        background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06));
+      }
+      .icon{ width:18px; height:18px; display:inline-block; opacity:.9; }
+
+      .footerNote{
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .overlay{
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        backdrop-filter: blur(6px);
+        display:none;
+        align-items:center;
+        justify-content:center;
+        padding: 18px;
+        z-index: 9999;
+      }
+      .overlay.show{ display:flex; }
+
+      .modal{
+        width:min(520px, 100%);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      .modalTop{ display:flex; align-items:center; gap:12px; }
+      .spinner{
+        width:22px; height:22px;
+        border: 3px solid rgba(255,255,255,.20);
+        border-top-color: rgba(255,255,255,.85);
+        border-radius: 999px;
+        animation: spin 1s linear infinite;
+        flex:0 0 auto;
+      }
+      @keyframes spin { to { transform: rotate(360deg);} }
+
+      .modalTitle{ margin:0; font-size: 15px; }
+      .modalBody{ margin-top:10px; }
+      .modalActions{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .btnGhost{
+        border-color: rgba(255,255,255,.16);
+        background: rgba(255,255,255,.05);
+      }
+      .btnPrimary{
+        border-color: rgba(29,185,84,.35);
+        background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
+      }
+      .btnDanger{
+        border-color: rgba(255,90,106,.35);
+        background: linear-gradient(180deg, rgba(255,90,106,.18), rgba(255,255,255,.06));
+      }
+      .srOnly{
+        position:absolute;
+        width:1px;height:1px;
+        padding:0;margin:-1px;
+        overflow:hidden;clip:rect(0,0,0,0);
+        white-space:nowrap;border:0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="app">
+      <section class="card" aria-live="polite" aria-busy="false">
+        <div class="header">
+          <h1 class="title">おもいで商店 入退店</h1>
+          <div id="badge" class="badge">起動中</div>
+        </div>
+
+        <div class="status" role="status" aria-atomic="true">
+          <div class="statusRow">
+            <div id="dot" class="dot" aria-hidden="true"></div>
+            <div class="i18nBlock">
+              <div id="statusJa" class="i18n-ja">初期化中...</div>
+              <div class="i18n-sub">
+                <div id="statusEn">Initializing...</div>
+                <div id="statusZh">正在初始化...</div>
+                <div id="statusKo">초기화 중...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="btnIn" class="btnIn" disabled>
+            <div class="btnLabel">
+              <span class="icon" aria-hidden="true">⟲</span>
+              <div class="btnText">
+                <div class="ja" id="btnInJa">入店</div>
+                <div class="sub">
+                  <div id="btnInEn">Check in</div>
+                  <div id="btnInZh">进入</div>
+                  <div id="btnInKo">입장</div>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          <button id="btnOut" class="btnOut" disabled>
+            <div class="btnLabel">
+              <span class="icon" aria-hidden="true">⟲</span>
+              <div class="btnText">
+                <div class="ja" id="btnOutJa">退店</div>
+                <div class="sub">
+                  <div id="btnOutEn">Check out</div>
+                  <div id="btnOutZh">离开</div>
+                  <div id="btnOutKo">퇴장</div>
+                </div>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div class="footerNote" id="noteJa">
+          処理中は操作できません。画面の案内に従ってください。
+          <div class="i18n-sub" style="margin-top:8px;">
+            <div id="noteEn">Buttons are disabled during processing. Please follow the on-screen instructions.</div>
+            <div id="noteZh">处理过程中按钮不可用。请按照屏幕提示操作。</div>
+            <div id="noteKo">처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="overlay" class="overlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modalTop">
+          <div id="spinner" class="spinner" aria-hidden="true"></div>
+          <h2 id="modalTitle" class="modalTitle">処理中</h2>
+        </div>
+
+        <div class="modalBody">
+          <div class="i18nBlock">
+            <div id="modalJa" class="i18n-ja">通信中です。しばらくお待ちください。</div>
+            <div class="i18n-sub">
+              <div id="modalEn">Communicating... Please wait.</div>
+              <div id="modalZh">正在通信…请稍候。</div>
+              <div id="modalKo">통신 중입니다. 잠시만 기다려 주세요.</div>
+            </div>
+          </div>
+
+          <div id="modalActions" class="modalActions" style="display:none;">
+            <button id="btnCancel" class="btnGhost">
+              <div class="btnText">
+                <div class="ja" id="btnCancelJa">キャンセル</div>
+                <div class="sub">
+                  <div id="btnCancelEn">Cancel</div>
+                  <div id="btnCancelZh">取消</div>
+                  <div id="btnCancelKo">취소</div>
+                </div>
+              </div>
+            </button>
+
+            <button id="btnConfirm" class="btnPrimary">
+              <div class="btnText">
+                <div class="ja" id="btnConfirmJa">実行</div>
+                <div class="sub">
+                  <div id="btnConfirmEn">Proceed</div>
+                  <div id="btnConfirmZh">执行</div>
+                  <div id="btnConfirmKo">실행</div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div id="modalCloseOnly" class="modalActions" style="display:none; grid-template-columns: 1fr;">
+            <button id="btnClose" class="btnGhost">
+              <div class="btnText">
+                <div class="ja" id="btnCloseJa">閉じる</div>
+                <div class="sub">
+                  <div id="btnCloseEn">Close</div>
+                  <div id="btnCloseZh">关闭</div>
+                  <div id="btnCloseKo">닫기</div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <div class="srOnly" id="srLive" aria-live="assertive"></div>
+        </div>
+      </div>
+    </div>
 
     <script>
       const LIFF_ID = "2008818718-xTQWF4uO";
-
       const GAS_EXEC_URL =
         "https://script.google.com/macros/s/AKfycbwXL18mJZETBx5y7-rRXKrisdq9P2LNUDmVkuQNMeblW7ACH9FdGDllpXsbGTj8WASJ0g/exec";
-
       const SHARED_KEY = "cw_omoidestore_2026_01_N8mQ3qvZp6H7k2Yd4T1s9R5bX0aC";
 
-      function setStatus(msg) {
-        document.getElementById("status").textContent = msg;
+      const UI = {
+        boot: {
+          badge: "起動中",
+          status: ["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."],
+          note: ["処理中は操作できません。画面の案内に従ってください。",
+                 "Buttons are disabled during processing. Please follow the on-screen instructions.",
+                 "处理过程中按钮不可用。请按照屏幕提示操作。",
+                 "처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요."]
+        },
+        ready: {
+          badge: "準備OK",
+          status: ["準備OKです。入店か退店を押してください。",
+                   "Ready. Tap Check in or Check out.",
+                   "准备就绪。请选择进入或离开。",
+                   "준비 완료. 입장 또는 퇴장을 눌러 주세요."],
+        },
+        initFail: {
+          badge: "エラー",
+          status: ["初期化に失敗しました。通信環境と設定を確認してください。",
+                   "Initialization failed. Check network and settings.",
+                   "初始化失败。请检查网络和设置。",
+                   "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."],
+        },
+        confirmIn: {
+          title: "確認",
+          body: ["入店を記録します。よろしいですか。",
+                 "You are about to check in. Continue?",
+                 "将记录进入。继续吗？",
+                 "입장을 기록합니다. 진행할까요?"],
+          confirm: ["入店する", "Check in", "进入", "입장"],
+          cancel: ["やめる", "Cancel", "取消", "취소"]
+        },
+        confirmOut: {
+          title: "確認",
+          body: ["退店を記録します。よろしいですか。",
+                 "You are about to check out. Continue?",
+                 "将记录离开。继续吗？",
+                 "퇴장을 기록합니다. 진행할까요?"],
+          confirm: ["退店する", "Check out", "离开", "퇴장"],
+          cancel: ["やめる", "Cancel", "取消", "취소"]
+        },
+        busyIn: {
+          badge: "処理中",
+          title: "入店処理中",
+          body: ["通信中です。しばらくお待ちください。",
+                 "Communicating... Please wait.",
+                 "正在通信…请稍候。",
+                 "통신 중입니다. 잠시만 기다려 주세요."]
+        },
+        busyOut: {
+          badge: "処理中",
+          title: "退店処理中",
+          body: ["通信中です。しばらくお待ちください。",
+                 "Communicating... Please wait.",
+                 "正在通信…请稍候。",
+                 "통신 중입니다. 잠시만 기다려 주세요."]
+        },
+        doneOk: {
+          badge: "完了",
+          sub: ["扉の操作を行ってください。",
+                "Please operate the door now.",
+                "请操作门。",
+                "문을 조작해 주세요."]
+        },
+        doneErr: {
+          badge: "エラー",
+          sub: ["もう一度お試しください。",
+                "Please try again.",
+                "请重试。",
+                "다시 시도해 주세요."]
+        },
+        netErr: {
+          badge: "エラー",
+          status: ["通信エラーまたはタイムアウト。電波状況を確認してください。",
+                   "Network error or timeout. Check your connection.",
+                   "通信错误或超时。请检查网络。",
+                   "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."]
+        }
+      };
+
+      const elBadge = document.getElementById("badge");
+      const elDot = document.getElementById("dot");
+
+      const elStatusJa = document.getElementById("statusJa");
+      const elStatusEn = document.getElementById("statusEn");
+      const elStatusZh = document.getElementById("statusZh");
+      const elStatusKo = document.getElementById("statusKo");
+
+      const elNoteEn = document.getElementById("noteEn");
+      const elNoteZh = document.getElementById("noteZh");
+      const elNoteKo = document.getElementById("noteKo");
+
+      const btnIn = document.getElementById("btnIn");
+      const btnOut = document.getElementById("btnOut");
+
+      const overlay = document.getElementById("overlay");
+      const spinner = document.getElementById("spinner");
+      const modalTitle = document.getElementById("modalTitle");
+
+      const modalJa = document.getElementById("modalJa");
+      const modalEn = document.getElementById("modalEn");
+      const modalZh = document.getElementById("modalZh");
+      const modalKo = document.getElementById("modalKo");
+
+      const modalActions = document.getElementById("modalActions");
+      const modalCloseOnly = document.getElementById("modalCloseOnly");
+
+      const btnCancel = document.getElementById("btnCancel");
+      const btnConfirm = document.getElementById("btnConfirm");
+      const btnClose = document.getElementById("btnClose");
+
+      const btnConfirmJa = document.getElementById("btnConfirmJa");
+      const btnConfirmEn = document.getElementById("btnConfirmEn");
+      const btnConfirmZh = document.getElementById("btnConfirmZh");
+      const btnConfirmKo = document.getElementById("btnConfirmKo");
+
+      const btnCancelJa = document.getElementById("btnCancelJa");
+      const btnCancelEn = document.getElementById("btnCancelEn");
+      const btnCancelZh = document.getElementById("btnCancelZh");
+      const btnCancelKo = document.getElementById("btnCancelKo");
+
+      const srLive = document.getElementById("srLive");
+      const card = document.querySelector(".card");
+
+      function setDot(state){
+        if (state === "ok") {
+          elDot.style.background = "var(--good)";
+          elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)";
+        } else if (state === "busy") {
+          elDot.style.background = "var(--warn)";
+          elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
+        } else if (state === "error") {
+          elDot.style.background = "var(--bad)";
+          elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)";
+        } else {
+          elDot.style.background = "var(--warn)";
+          elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
+        }
       }
 
-      function enableButtons(f) {
-        document.getElementById("btnIn").disabled = !f;
-        document.getElementById("btnOut").disabled = !f;
+      function setStatusLines(lines){
+        elStatusJa.textContent = lines[0] || "";
+        elStatusEn.textContent = lines[1] || "";
+        elStatusZh.textContent = lines[2] || "";
+        elStatusKo.textContent = lines[3] || "";
+        srLive.textContent = lines[0] || "";
+      }
+
+      function setNoteLines(lines){
+        elNoteEn.textContent = lines[1] || "";
+        elNoteZh.textContent = lines[2] || "";
+        elNoteKo.textContent = lines[3] || "";
+      }
+
+      function enableButtons(ready){
+        btnIn.disabled = !ready;
+        btnOut.disabled = !ready;
+      }
+
+      function showOverlay(show){
+        overlay.classList.toggle("show", !!show);
+        overlay.setAttribute("aria-hidden", show ? "false" : "true");
+      }
+
+      function setBusy(on){
+        card.setAttribute("aria-busy", on ? "true" : "false");
+        enableButtons(!on);
+      }
+
+      function setModalText(title, bodyLines){
+        modalTitle.textContent = title || "";
+        modalJa.textContent = bodyLines[0] || "";
+        modalEn.textContent = bodyLines[1] || "";
+        modalZh.textContent = bodyLines[2] || "";
+        modalKo.textContent = bodyLines[3] || "";
+      }
+
+      function modeConfirm(cfg){
+        spinner.style.display = "none";
+        modalActions.style.display = "grid";
+        modalCloseOnly.style.display = "none";
+
+        setModalText(cfg.title, cfg.body);
+
+        btnConfirmJa.textContent = cfg.confirm[0];
+        btnConfirmEn.textContent = cfg.confirm[1];
+        btnConfirmZh.textContent = cfg.confirm[2];
+        btnConfirmKo.textContent = cfg.confirm[3];
+
+        btnCancelJa.textContent = cfg.cancel[0];
+        btnCancelEn.textContent = cfg.cancel[1];
+        btnCancelZh.textContent = cfg.cancel[2];
+        btnCancelKo.textContent = cfg.cancel[3];
+      }
+
+      function modeBusy(cfg){
+        spinner.style.display = "block";
+        modalActions.style.display = "none";
+        modalCloseOnly.style.display = "none";
+        setModalText(cfg.title, cfg.body);
+      }
+
+      function modeCloseOnly(title, bodyLines){
+        spinner.style.display = "none";
+        modalActions.style.display = "none";
+        modalCloseOnly.style.display = "grid";
+        setModalText(title, bodyLines);
       }
 
       function jsonp(url) {
         return new Promise((resolve, reject) => {
           const cb = "cb_" + Math.random().toString(36).slice(2);
-
-          window[cb] = (data) => {
-            cleanup();
-            resolve(data);
-          };
+          window[cb] = (data) => { cleanup(); resolve(data); };
 
           const script = document.createElement("script");
-          const timer = setTimeout(() => {
-            cleanup();
-            reject(new Error("timeout"));
-          }, 15000);
+          const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 15000);
 
           function cleanup() {
             clearTimeout(timer);
@@ -52,35 +551,68 @@
 
           const sep = url.includes("?") ? "&" : "?";
           script.src = url + sep + "callback=" + encodeURIComponent(cb);
-          script.onerror = () => {
-            cleanup();
-            reject(new Error("load error"));
-          };
+          script.onerror = () => { cleanup(); reject(new Error("load error")); };
 
           document.body.appendChild(script);
         });
       }
 
-      async function init() {
-        try {
-          await liff.init({
-            liffId: LIFF_ID,
-            withLoginOnExternalBrowser: true
-          });
+      async function init(){
+        elBadge.textContent = UI.boot.badge;
+        setDot("boot");
+        setStatusLines(UI.boot.status);
+        setNoteLines(UI.boot.note);
+        enableButtons(false);
 
-          setStatus("準備OK。入店または退店を押してください。");
+        try{
+          await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+          elBadge.textContent = UI.ready.badge;
+          setDot("ok");
+          setStatusLines(UI.ready.status);
           enableButtons(true);
-        } catch (e) {
-          setStatus("LIFF初期化エラー。Endpoint URL が GitHub Pages になっているか確認してください。");
+        }catch(e){
+          elBadge.textContent = UI.initFail.badge;
+          setDot("error");
+          setStatusLines(UI.initFail.status);
           enableButtons(false);
         }
       }
 
-      async function callGAS(action) {
-        enableButtons(false);
-        setStatus(action === "in" ? "入店処理中..." : "退店処理中...");
+      function confirmAction(action){
+        const cfg = action === "in" ? UI.confirmIn : UI.confirmOut;
+        showOverlay(true);
+        modeConfirm(cfg);
 
-        try {
+        return new Promise((resolve) => {
+          const onCancel = () => { cleanup(); resolve(false); };
+          const onConfirm = () => { cleanup(); resolve(true); };
+
+          function cleanup(){
+            btnCancel.removeEventListener("click", onCancel);
+            btnConfirm.removeEventListener("click", onConfirm);
+            showOverlay(false);
+          }
+
+          btnCancel.addEventListener("click", onCancel);
+          btnConfirm.addEventListener("click", onConfirm);
+        });
+      }
+
+      async function callGAS(action){
+        const ok = await confirmAction(action);
+        if (!ok) return;
+
+        const busyCfg = action === "in" ? UI.busyIn : UI.busyOut;
+
+        showOverlay(true);
+        modeBusy(busyCfg);
+        setBusy(true);
+
+        elBadge.textContent = busyCfg.badge;
+        setDot("busy");
+        setStatusLines(action === "in" ? UI.busyIn.body : UI.busyOut.body);
+
+        try{
           const url =
             GAS_EXEC_URL +
             "?action=" + encodeURIComponent(action) +
@@ -88,16 +620,63 @@
             "&t=" + Date.now();
 
           const res = await jsonp(url);
-          setStatus(res && res.message ? res.message : "完了");
-        } catch (e) {
-          setStatus("通信エラーまたはタイムアウト");
-        } finally {
+
+          if (res && res.ok){
+            elBadge.textContent = UI.doneOk.badge;
+            setDot("ok");
+            setStatusLines([
+              res.message || "完了しました。",
+              res.message || "Done.",
+              res.message || "完成。",
+              res.message || "완료되었습니다."
+            ]);
+            modeCloseOnly("完了", [
+              (res.message || "完了しました。") + " " + UI.doneOk.sub[0],
+              "Done. " + UI.doneOk.sub[1],
+              "完成。 " + UI.doneOk.sub[2],
+              "완료되었습니다. " + UI.doneOk.sub[3]
+            ]);
+          } else {
+            elBadge.textContent = UI.doneErr.badge;
+            setDot("error");
+            const msg = (res && res.message) ? res.message : "エラーが発生しました。";
+            setStatusLines([msg, msg, msg, msg]);
+            modeCloseOnly("エラー", [
+              msg + " " + UI.doneErr.sub[0],
+              msg + " " + UI.doneErr.sub[1],
+              msg + " " + UI.doneErr.sub[2],
+              msg + " " + UI.doneErr.sub[3]
+            ]);
+          }
+
+          await new Promise((resolve) => {
+            const onClose = () => { btnClose.removeEventListener("click", onClose); showOverlay(false); resolve(); };
+            btnClose.addEventListener("click", onClose);
+          });
+
+        } catch(e){
+          elBadge.textContent = UI.netErr.badge;
+          setDot("error");
+          setStatusLines(UI.netErr.status);
+          showOverlay(true);
+          modeCloseOnly("エラー", UI.netErr.status);
+
+          await new Promise((resolve) => {
+            const onClose = () => { btnClose.removeEventListener("click", onClose); showOverlay(false); resolve(); };
+            btnClose.addEventListener("click", onClose);
+          });
+
+        } finally{
+          setBusy(false);
+          elBadge.textContent = UI.ready.badge;
+          setDot("ok");
+          setStatusLines(UI.ready.status);
           enableButtons(true);
         }
       }
 
-      document.getElementById("btnIn").onclick = () => callGAS("in");
-      document.getElementById("btnOut").onclick = () => callGAS("out");
+      btnIn.addEventListener("click", () => callGAS("in"));
+      btnOut.addEventListener("click", () => callGAS("out"));
 
       init();
     </script>
