@@ -6,77 +6,76 @@
   <title>COMPASSION WORLD 入店退店管理システム</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
+  <!-- ★ 応急処置：alert を完全に無効化（LIFF内で処理が止まるのを防ぐ） -->
+  <script>
+    window.alert = function(){};
+    window.confirm = function(){ return true; };
+    window.prompt = function(){ return null; };
+  </script>
+
   <style>
     :root{
       --bg:#0b0f1a; --card:#121a2b; --text:#e7ecff; --muted:#aab6da;
       --good:#1db954; --warn:#f4c542; --bad:#ff5a6a;
-      --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35); --radius: 18px;
     }
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;
       background:
         radial-gradient(1200px 700px at 30% -10%, #1a2a6c33, transparent),
         radial-gradient(900px 500px at 120% 20%, #b21f1f22, transparent),
         var(--bg);
       color:var(--text);
       min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      display:flex; align-items:center; justify-content:center;
       padding:16px;
     }
-    .app{width:min(640px,100%)}
+    .app{ width:min(640px, 100%); }
     .card{
-      background:linear-gradient(180deg,#141d33,var(--card));
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:18px;
+      background: linear-gradient(180deg, #141d33, var(--card));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 18px;
     }
-    .header{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .title{font-size:16px;margin:0}
-    .badge{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted)}
-    .status{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px;margin:12px 0}
-    .row{display:flex;gap:10px}
-    .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;background:var(--warn)}
-    .ja{font-size:15px;font-weight:650}
-    .sub{font-size:12px;color:var(--muted)}
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;}
+    .title{font-size:16px; margin:0; line-height:1.35;}
+    .badge{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04);}
+    .status{border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); border-radius:14px; padding:12px; margin:12px 0 16px;}
+    .statusRow{display:flex; gap:10px;}
+    .dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn);}
+    .i18n-ja{ font-size:15px; font-weight:650; }
+    .i18n-sub div{ font-size:12px; color:var(--muted); }
+
+    .actions{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     button{
-      border-radius:16px;
-      padding:14px;
       border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       color:var(--text);
+      border-radius:16px;
+      padding:14px;
       cursor:pointer;
     }
-    button:disabled{opacity:.5}
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+    .btnIn{ background:linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
+    .btnOut{ background:linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06)); }
+
     .overlay{
-      position:fixed;inset:0;
-      background:rgba(0,0,0,.6);
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
       display:none;
-      align-items:center;
-      justify-content:center;
+      align-items:center; justify-content:center;
       z-index:9999;
     }
-    .overlay.show{display:flex}
+    .overlay.show{ display:flex; }
     .modal{
-      background:#141d33;
-      border-radius:18px;
-      padding:16px;
       width:min(560px,100%);
+      border-radius:20px;
+      background:#141d33;
+      padding:16px;
     }
-    input,textarea{
-      width:100%;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:#0003;
-      color:var(--text);
-      padding:10px;
-    }
-    textarea{min-height:80px}
   </style>
 </head>
 
@@ -89,123 +88,67 @@
     </div>
 
     <div class="status">
-      <div class="row">
+      <div class="statusRow">
         <div id="dot" class="dot"></div>
         <div>
-          <div id="statusJa" class="ja">初期化中...</div>
-          <div id="statusEn" class="sub">Initializing...</div>
-          <div id="statusZh" class="sub">正在初始化...</div>
-          <div id="statusKo" class="sub">초기화 중...</div>
+          <div id="statusJa" class="i18n-ja">初期化中...</div>
+          <div class="i18n-sub">
+            <div id="statusEn">Initializing...</div>
+            <div id="statusZh">正在初始化...</div>
+            <div id="statusKo">초기화 중...</div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="actions">
-      <button id="btnIn" disabled>入店</button>
-      <button id="btnOut" disabled>退店</button>
+      <button id="btnIn" class="btnIn" disabled>入店</button>
+      <button id="btnOut" class="btnOut" disabled>退店</button>
     </div>
   </section>
 </main>
 
-<div id="overlay" class="overlay">
-  <div class="modal">
-    <h3 id="modalTitle">会員情報登録</h3>
-    <div id="modalBody"></div>
-    <div style="margin-top:12px;display:grid;gap:8px">
-      <button id="modalOk">送信</button>
-      <button id="modalCancel">閉じる</button>
-    </div>
-  </div>
-</div>
-
 <script>
 const LIFF_ID = "2008818718-xTQWF4uO";
+const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbwHGto3ZK9UUETjdU3HJsqtW8pVhACN3H24DK_eBrRB8ubtDBHWANOFPpL1RdBBLdKQ/exec";
 
-/* ★ ここが今回の反映ポイント ★ */
-const GAS_EXEC_URL =
-  "https://script.google.com/macros/s/AKfycbx_XXjlffpUDVhFoy3FanwSPDT9y4m0Uc1dJLn8NwotXmjzjLuez5hCbQKGMxu0HJgo/exec";
-
-const badge = document.getElementById("badge");
-const dot = document.getElementById("dot");
+const elStatusJa = document.getElementById("statusJa");
 const btnIn = document.getElementById("btnIn");
 const btnOut = document.getElementById("btnOut");
-const overlay = document.getElementById("overlay");
-const modalBody = document.getElementById("modalBody");
+const badge = document.getElementById("badge");
 
-function setStatus(ja,en,zh,ko){
-  statusJa.textContent=ja;
-  statusEn.textContent=en;
-  statusZh.textContent=zh;
-  statusKo.textContent=ko;
-}
-
-function jsonp(url){
-  return new Promise((res,rej)=>{
+async function jsonp(url){
+  return new Promise((resolve,reject)=>{
     const cb="cb_"+Math.random().toString(36).slice(2);
-    window[cb]=(d)=>{delete window[cb];res(d)};
+    window[cb]=d=>{delete window[cb]; resolve(d);};
     const s=document.createElement("script");
     s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
-    s.onerror=rej;
+    s.onerror=()=>reject();
     document.body.appendChild(s);
   });
 }
 
-async function checkProfile(){
-  const t=liff.getIDToken();
-  return jsonp(GAS_EXEC_URL+"?action=profile_status&id_token="+encodeURIComponent(t));
+async function call(action){
+  const token=liff.getIDToken();
+  const url=GAS_EXEC_URL+"?action="+action+"&id_token="+encodeURIComponent(token);
+  const res=await jsonp(url);
+  if(res.ok){
+    elStatusJa.textContent=res.message;
+  }else{
+    elStatusJa.textContent=res.message||"エラー";
+  }
 }
 
-function showProfileForm(){
-  overlay.classList.add("show");
-  modalBody.innerHTML=`
-    <input id="fName" placeholder="氏名（フルネーム）">
-    <input id="fPhone" placeholder="電話番号">
-    <textarea id="fAddr" placeholder="住所"></textarea>
-    <label><input id="fOk" type="checkbox"> 同意します</label>
-  `;
-}
-
-async function submitProfile(){
-  const t=liff.getIDToken();
-  const url=GAS_EXEC_URL+
-    "?action=profile_set"+
-    "&id_token="+encodeURIComponent(t)+
-    "&full_name="+encodeURIComponent(fName.value)+
-    "&phone="+encodeURIComponent(fPhone.value)+
-    "&address="+encodeURIComponent(fAddr.value)+
-    "&consent="+encodeURIComponent(fOk.checked);
-  const r=await jsonp(url);
-  if(r.ok){
-    overlay.classList.remove("show");
-    ready();
-  }else alert(r.message);
-}
-
-async function ready(){
+async function init(){
+  await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser:true });
   badge.textContent="準備OK";
-  dot.style.background="var(--good)";
-  setStatus(
-    "準備ができました。入店または退店を押してください。",
-    "Ready",
-    "准备就绪",
-    "준비 완료"
-  );
+  elStatusJa.textContent="準備ができました。";
   btnIn.disabled=false;
   btnOut.disabled=false;
 }
 
-async function init(){
-  await liff.init({liffId:LIFF_ID,withLoginOnExternalBrowser:true});
-  const p=await checkProfile();
-  if(p.ok && p.has_profile) ready();
-  else showProfileForm();
-}
-
-modalOk.onclick=submitProfile;
-modalCancel.onclick=()=>overlay.classList.remove("show");
-
-btnIn.onclick=()=>alert("入店処理");
-btnOut.onclick=()=>alert("退店処理");
+btnIn.onclick=()=>call("in");
+btnOut.onclick=()=>call("out");
 
 init();
 </script>
