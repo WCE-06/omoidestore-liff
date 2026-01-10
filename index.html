@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>COMPASSION WORLD 入店退店</title>
+    <title>COMPASSION WORLD 入店退店管理システム</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
       :root{
@@ -11,7 +11,6 @@
         --card:#121a2b;
         --text:#e7ecff;
         --muted:#aab6da;
-        --line:#1e2a48;
         --good:#1db954;
         --warn:#f4c542;
         --bad:#ff5a6a;
@@ -33,7 +32,7 @@
         justify-content:center;
         padding:16px;
       }
-      .app{ width:min(560px, 100%); }
+      .app{ width:min(640px, 100%); }
       .card{
         background: linear-gradient(180deg, #141d33, var(--card));
         border: 1px solid rgba(255,255,255,.08);
@@ -43,15 +42,16 @@
       }
       .header{
         display:flex;
-        align-items:center;
+        align-items:flex-start;
         justify-content:space-between;
         gap:12px;
         margin-bottom:12px;
       }
       .title{
-        font-size: 18px;
+        font-size: 16px;
         margin:0;
         letter-spacing: .02em;
+        line-height:1.35;
       }
       .badge{
         font-size: 12px;
@@ -150,7 +150,7 @@
       .overlay.show{ display:flex; }
 
       .modal{
-        width:min(520px, 100%);
+        width:min(560px, 100%);
         border-radius: 20px;
         border: 1px solid rgba(255,255,255,.14);
         background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
@@ -184,10 +184,6 @@
         border-color: rgba(29,185,84,.35);
         background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
       }
-      .btnDanger{
-        border-color: rgba(255,90,106,.35);
-        background: linear-gradient(180deg, rgba(255,90,106,.18), rgba(255,255,255,.06));
-      }
       .srOnly{
         position:absolute;
         width:1px;height:1px;
@@ -202,7 +198,7 @@
     <main class="app">
       <section class="card" aria-live="polite" aria-busy="false">
         <div class="header">
-          <h1 class="title">COMPASSION WORLD 入退店</h1>
+          <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
           <div id="badge" class="badge">起動中</div>
         </div>
 
@@ -251,7 +247,7 @@
         </div>
 
         <div class="footerNote" id="noteJa">
-          処理中は操作できません。画面の案内に従ってください。
+          処理中はボタンが押せません。画面の案内に沿って操作してください。
           <div class="i18n-sub" style="margin-top:8px;">
             <div id="noteEn">Buttons are disabled during processing. Please follow the on-screen instructions.</div>
             <div id="noteZh">处理过程中按钮不可用。请按照屏幕提示操作。</div>
@@ -265,23 +261,23 @@
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modalTop">
           <div id="spinner" class="spinner" aria-hidden="true"></div>
-          <h2 id="modalTitle" class="modalTitle">処理中</h2>
+          <h2 id="modalTitle" class="modalTitle">確認</h2>
         </div>
 
         <div class="modalBody">
           <div class="i18nBlock">
-            <div id="modalJa" class="i18n-ja">通信中です。しばらくお待ちください。</div>
+            <div id="modalJa" class="i18n-ja">確認中...</div>
             <div class="i18n-sub">
-              <div id="modalEn">Communicating... Please wait.</div>
-              <div id="modalZh">正在通信…请稍候。</div>
-              <div id="modalKo">통신 중입니다. 잠시만 기다려 주세요.</div>
+              <div id="modalEn">Checking...</div>
+              <div id="modalZh">正在确认...</div>
+              <div id="modalKo">확인 중...</div>
             </div>
           </div>
 
           <div id="modalActions" class="modalActions" style="display:none;">
             <button id="btnCancel" class="btnGhost">
               <div class="btnText">
-                <div class="ja" id="btnCancelJa">キャンセル</div>
+                <div class="ja" id="btnCancelJa">やめる</div>
                 <div class="sub">
                   <div id="btnCancelEn">Cancel</div>
                   <div id="btnCancelZh">取消</div>
@@ -302,19 +298,6 @@
             </button>
           </div>
 
-          <div id="modalCloseOnly" class="modalActions" style="display:none; grid-template-columns: 1fr;">
-            <button id="btnClose" class="btnGhost">
-              <div class="btnText">
-                <div class="ja" id="btnCloseJa">閉じる</div>
-                <div class="sub">
-                  <div id="btnCloseEn">Close</div>
-                  <div id="btnCloseZh">关闭</div>
-                  <div id="btnCloseKo">닫기</div>
-                </div>
-              </div>
-            </button>
-          </div>
-
           <div class="srOnly" id="srLive" aria-live="assertive"></div>
         </div>
       </div>
@@ -322,87 +305,116 @@
 
     <script>
       const LIFF_ID = "2008818718-xTQWF4uO";
+
       const GAS_EXEC_URL =
-        "https://script.google.com/macros/s/AKfycbwXL18mJZETBx5y7-rRXKrisdq9P2LNUDmVkuQNMeblW7ACH9FdGDllpXsbGTj8WASJ0g/exec";
-      const SHARED_KEY = "cw_omoidestore_2026_01_N8mQ3qvZp6H7k2Yd4T1s9R5bX0aC";
+        "https://script.google.com/macros/s/AKfycbwnaMQ8zAA6lNLnU_6DCGBTtg6HATp6qNJP_KEgqrygXLYzt5y9MT6EFvTWLkq9hb7y/exec";
 
       const UI = {
         boot: {
           badge: "起動中",
           status: ["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."],
-          note: ["処理中は操作できません。画面の案内に従ってください。",
-                 "Buttons are disabled during processing. Please follow the on-screen instructions.",
-                 "处理过程中按钮不可用。请按照屏幕提示操作。",
-                 "처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요."]
+          note: [
+            "処理中はボタンが押せません。画面の案内に沿って操作してください。",
+            "Buttons are disabled during processing. Please follow the on-screen instructions.",
+            "处理过程中按钮不可用。请按照屏幕提示操作。",
+            "처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요."
+          ],
         },
         ready: {
           badge: "準備OK",
-          status: ["システムの準備が整いました。入店か退店を押してください。",
-                   "Ready. Tap Check in or Check out.",
-                   "准备就绪。请选择进入或离开。",
-                   "준비 완료. 입장 또는 퇴장을 눌러 주세요."],
+          status: [
+            "準備ができました。入店または退店を押してください。",
+            "Ready. Tap Check in or Check out.",
+            "准备就绪。请选择进入或离开。",
+            "준비 완료. 입장 또는 퇴장을 눌러 주세요."
+          ],
         },
         initFail: {
           badge: "エラー",
-          status: ["初期化に失敗しました。通信環境と設定を確認してください。",
-                   "Initialization failed. Check network and settings.",
-                   "初始化失败。请检查网络和设置。",
-                   "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."],
+          status: [
+            "初期化に失敗しました。通信環境と設定を確認してください。",
+            "Initialization failed. Check network and settings.",
+            "初始化失败。请检查网络和设置。",
+            "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
+          ],
         },
         confirmIn: {
           title: "確認",
-          body: ["入店を記録します。よろしいですか。",
-                 "You are about to check in. Continue?",
-                 "将记录进入。继续吗？",
-                 "입장을 기록합니다. 진행할까요?"],
+          body: [
+            "入店を記録します。よろしいですか。",
+            "You are about to check in. Continue?",
+            "将记录进入。继续吗？",
+            "입장을 기록합니다. 진행할까요?"
+          ],
           confirm: ["入店する", "Check in", "进入", "입장"],
-          cancel: ["やめる", "Cancel", "取消", "취소"]
+          cancel: ["やめる", "Cancel", "取消", "취소"],
         },
         confirmOut: {
           title: "確認",
-          body: ["退店を記録します。よろしいですか。",
-                 "You are about to check out. Continue?",
-                 "将记录离开。继续吗？",
-                 "퇴장을 기록합니다. 진행할까요?"],
+          body: [
+            "退店を記録します。よろしいですか。",
+            "You are about to check out. Continue?",
+            "将记录离开。继续吗？",
+            "퇴장을 기록합니다. 진행할까요?"
+          ],
           confirm: ["退店する", "Check out", "离开", "퇴장"],
-          cancel: ["やめる", "Cancel", "取消", "취소"]
+          cancel: ["やめる", "Cancel", "取消", "취소"],
         },
         busyIn: {
           badge: "処理中",
           title: "入店処理中",
-          body: ["通信中です。しばらくお待ちください。",
-                 "Communicating... Please wait.",
-                 "正在通信…请稍候。",
-                 "통신 중입니다. 잠시만 기다려 주세요."]
+          body: [
+            "通信中です。しばらくお待ちください。",
+            "Communicating... Please wait.",
+            "正在通信…请稍候。",
+            "통신 중입니다. 잠시만 기다려 주세요."
+          ],
         },
         busyOut: {
           badge: "処理中",
           title: "退店処理中",
-          body: ["通信中です。しばらくお待ちください。",
-                 "Communicating... Please wait.",
-                 "正在通信…请稍候。",
-                 "통신 중입니다. 잠시만 기다려 주세요."]
+          body: [
+            "通信中です。しばらくお待ちください。",
+            "Communicating... Please wait.",
+            "正在通信…请稍候。",
+            "통신 중입니다. 잠시만 기다려 주세요."
+          ],
         },
         doneOk: {
           badge: "完了",
-          sub: ["足元にお気をつけてお通りください。",
-                "Please operate the door now.",
-                "请操作门。",
-                "문을 조작해 주세요."]
+          sub: [
+            "扉の操作を行ってください。",
+            "Please operate the door now.",
+            "请操作门。",
+            "문을 조작해 주세요."
+          ],
         },
         doneErr: {
           badge: "エラー",
-          sub: ["もう一度お試しください。",
-                "Please try again.",
-                "请重试。",
-                "다시 시도해 주세요."]
+          sub: [
+            "もう一度お試しください。",
+            "Please try again.",
+            "请重试。",
+            "다시 시도해 주세요."
+          ],
         },
         netErr: {
           badge: "エラー",
-          status: ["通信エラーまたはタイムアウト。電波状況を確認してください。",
-                   "Network error or timeout. Check your connection.",
-                   "通信错误或超时。请检查网络。",
-                   "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."]
+          status: [
+            "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
+            "Network error or timeout. Check your connection.",
+            "通信错误或超时。请检查网络。",
+            "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
+          ],
+        },
+        tokenMissing: {
+          badge: "エラー",
+          status: [
+            "認証情報を取得できませんでした。LINEを開き直してお試しください。",
+            "Could not get authentication info. Please reopen LINE and try again.",
+            "无法获取认证信息。请重新打开LINE后重试。",
+            "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
+          ],
         }
       };
 
@@ -431,11 +443,8 @@
       const modalKo = document.getElementById("modalKo");
 
       const modalActions = document.getElementById("modalActions");
-      const modalCloseOnly = document.getElementById("modalCloseOnly");
-
       const btnCancel = document.getElementById("btnCancel");
       const btnConfirm = document.getElementById("btnConfirm");
-      const btnClose = document.getElementById("btnClose");
 
       const btnConfirmJa = document.getElementById("btnConfirmJa");
       const btnConfirmEn = document.getElementById("btnConfirmEn");
@@ -506,8 +515,6 @@
       function modeConfirm(cfg){
         spinner.style.display = "none";
         modalActions.style.display = "grid";
-        modalCloseOnly.style.display = "none";
-
         setModalText(cfg.title, cfg.body);
 
         btnConfirmJa.textContent = cfg.confirm[0];
@@ -524,15 +531,7 @@
       function modeBusy(cfg){
         spinner.style.display = "block";
         modalActions.style.display = "none";
-        modalCloseOnly.style.display = "none";
         setModalText(cfg.title, cfg.body);
-      }
-
-      function modeCloseOnly(title, bodyLines){
-        spinner.style.display = "none";
-        modalActions.style.display = "none";
-        modalCloseOnly.style.display = "grid";
-        setModalText(title, bodyLines);
       }
 
       function jsonp(url) {
@@ -602,6 +601,14 @@
         const ok = await confirmAction(action);
         if (!ok) return;
 
+        const idToken = liff.getIDToken();
+        if (!idToken) {
+          elBadge.textContent = UI.tokenMissing.badge;
+          setDot("error");
+          setStatusLines(UI.tokenMissing.status);
+          return;
+        }
+
         const busyCfg = action === "in" ? UI.busyIn : UI.busyOut;
 
         showOverlay(true);
@@ -610,13 +617,13 @@
 
         elBadge.textContent = busyCfg.badge;
         setDot("busy");
-        setStatusLines(action === "in" ? UI.busyIn.body : UI.busyOut.body);
+        setStatusLines(busyCfg.body);
 
         try{
           const url =
             GAS_EXEC_URL +
             "?action=" + encodeURIComponent(action) +
-            "&k=" + encodeURIComponent(SHARED_KEY) +
+            "&id_token=" + encodeURIComponent(idToken) +
             "&t=" + Date.now();
 
           const res = await jsonp(url);
@@ -624,50 +631,31 @@
           if (res && res.ok){
             elBadge.textContent = UI.doneOk.badge;
             setDot("ok");
+            const msg = res.message || "完了しました。";
             setStatusLines([
-              res.message || "完了しました。",
-              res.message || "Done.",
-              res.message || "完成。",
-              res.message || "완료되었습니다."
-            ]);
-            modeCloseOnly("完了", [
-              (res.message || "完了しました。") + " " + UI.doneOk.sub[0],
-              "Done. " + UI.doneOk.sub[1],
-              "完成。 " + UI.doneOk.sub[2],
-              "완료되었습니다. " + UI.doneOk.sub[3]
+              msg + " " + UI.doneOk.sub[0],
+              msg + " " + UI.doneOk.sub[1],
+              msg + " " + UI.doneOk.sub[2],
+              msg + " " + UI.doneOk.sub[3]
             ]);
           } else {
             elBadge.textContent = UI.doneErr.badge;
             setDot("error");
             const msg = (res && res.message) ? res.message : "エラーが発生しました。";
-            setStatusLines([msg, msg, msg, msg]);
-            modeCloseOnly("エラー", [
+            setStatusLines([
               msg + " " + UI.doneErr.sub[0],
               msg + " " + UI.doneErr.sub[1],
               msg + " " + UI.doneErr.sub[2],
               msg + " " + UI.doneErr.sub[3]
             ]);
           }
-
-          await new Promise((resolve) => {
-            const onClose = () => { btnClose.removeEventListener("click", onClose); showOverlay(false); resolve(); };
-            btnClose.addEventListener("click", onClose);
-          });
-
         } catch(e){
           elBadge.textContent = UI.netErr.badge;
           setDot("error");
           setStatusLines(UI.netErr.status);
-          showOverlay(true);
-          modeCloseOnly("エラー", UI.netErr.status);
-
-          await new Promise((resolve) => {
-            const onClose = () => { btnClose.removeEventListener("click", onClose); showOverlay(false); resolve(); };
-            btnClose.addEventListener("click", onClose);
-          });
-
         } finally{
           setBusy(false);
+          showOverlay(false);
           elBadge.textContent = UI.ready.badge;
           setDot("ok");
           setStatusLines(UI.ready.status);
