@@ -221,11 +221,11 @@
             <div class="btnLabel">
               <span class="icon" aria-hidden="true">⟲</span>
               <div class="btnText">
-                <div class="ja" id="btnInJa">入店</div>
+                <div class="ja">入店</div>
                 <div class="sub">
-                  <div id="btnInEn">Check in</div>
-                  <div id="btnInZh">进入</div>
-                  <div id="btnInKo">입장</div>
+                  <div>Check in</div>
+                  <div>进入</div>
+                  <div>입장</div>
                 </div>
               </div>
             </div>
@@ -235,23 +235,23 @@
             <div class="btnLabel">
               <span class="icon" aria-hidden="true">⟲</span>
               <div class="btnText">
-                <div class="ja" id="btnOutJa">退店</div>
+                <div class="ja">退店</div>
                 <div class="sub">
-                  <div id="btnOutEn">Check out</div>
-                  <div id="btnOutZh">离开</div>
-                  <div id="btnOutKo">퇴장</div>
+                  <div>Check out</div>
+                  <div>离开</div>
+                  <div>퇴장</div>
                 </div>
               </div>
             </div>
           </button>
         </div>
 
-        <div class="footerNote" id="noteJa">
+        <div class="footerNote">
           処理中はボタンが押せません。画面の案内に沿って操作してください。
           <div class="i18n-sub" style="margin-top:8px;">
-            <div id="noteEn">Buttons are disabled during processing. Please follow the on-screen instructions.</div>
-            <div id="noteZh">处理过程中按钮不可用。请按照屏幕提示操作。</div>
-            <div id="noteKo">처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
+            <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
+            <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
+            <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
           </div>
         </div>
       </section>
@@ -307,7 +307,7 @@
       const LIFF_ID = "2008818718-xTQWF4uO";
 
       const GAS_EXEC_URL =
-        "https://script.google.com/macros/s/AKfycbwnaMQ8zAA6lNLnU_6DCGBTtg6HATp6qNJP_KEgqrygXLYzt5y9MT6EFvTWLkq9hb7y/exec";
+        "https://script.google.com/macros/s/AKfycbx_F2q32P4ytijyhpN1jAaO8jbociI0USpzaD0I3TwWWWKI4b5CyH_AB0nmwlh39z2y/exec";
 
       const UI = {
         boot: {
@@ -383,7 +383,7 @@
         doneOk: {
           badge: "完了",
           sub: [
-            "扉の操作を行ってください。",
+            "扉のセキュリティーアラートが解除されました。段差がございますので、足元にお気をつけください。",
             "Please operate the door now.",
             "请操作门。",
             "문을 조작해 주세요."
@@ -425,10 +425,6 @@
       const elStatusEn = document.getElementById("statusEn");
       const elStatusZh = document.getElementById("statusZh");
       const elStatusKo = document.getElementById("statusKo");
-
-      const elNoteEn = document.getElementById("noteEn");
-      const elNoteZh = document.getElementById("noteZh");
-      const elNoteKo = document.getElementById("noteKo");
 
       const btnIn = document.getElementById("btnIn");
       const btnOut = document.getElementById("btnOut");
@@ -481,12 +477,6 @@
         elStatusZh.textContent = lines[2] || "";
         elStatusKo.textContent = lines[3] || "";
         srLive.textContent = lines[0] || "";
-      }
-
-      function setNoteLines(lines){
-        elNoteEn.textContent = lines[1] || "";
-        elNoteZh.textContent = lines[2] || "";
-        elNoteKo.textContent = lines[3] || "";
       }
 
       function enableButtons(ready){
@@ -560,7 +550,6 @@
         elBadge.textContent = UI.boot.badge;
         setDot("boot");
         setStatusLines(UI.boot.status);
-        setNoteLines(UI.boot.note);
         enableButtons(false);
 
         try{
@@ -656,9 +645,6 @@
         } finally{
           setBusy(false);
           showOverlay(false);
-          elBadge.textContent = UI.ready.badge;
-          setDot("ok");
-          setStatusLines(UI.ready.status);
           enableButtons(true);
         }
       }
