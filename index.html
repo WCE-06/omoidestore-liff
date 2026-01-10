@@ -7,10 +7,8 @@
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <script>
-    /* LIFF内で処理が止まるのを防ぐ */
+    // 応急処置: alert が残っていても処理を止めない
     window.alert = function(){};
-    window.confirm = function(){ return true; };
-    window.prompt = function(){ return null; };
   </script>
 
   <style>
@@ -29,157 +27,514 @@
         var(--bg);
       color:var(--text);
       min-height:100vh;
-      overflow:auto;
+      display:flex; align-items:center; justify-content:center;
       padding:16px;
     }
-    .app{ width:min(640px, 100%); margin:0 auto; }
+    .app{ width:min(640px, 100%); }
     .card{
       background: linear-gradient(180deg, #141d33, var(--card));
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow:var(--shadow);
-      border-radius:var(--radius);
-      padding:18px;
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 18px;
     }
-    .header{display:flex; justify-content:space-between; gap:12px; margin-bottom:12px;}
-    .title{font-size:16px; margin:0;}
-    .badge{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted);}
+    .header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;}
+    .title{font-size:16px; margin:0; letter-spacing:.02em; line-height:1.35;}
+    .badge{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap;}
 
-    .status{border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:12px; margin-bottom:16px;}
-    .dot{width:10px;height:10px;border-radius:50%;background:var(--warn);display:inline-block;margin-right:8px;}
+    .status{border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); border-radius:14px; padding:12px; margin:12px 0 16px;}
+    .statusRow{display:flex; align-items:flex-start; gap:10px;}
+    .dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn); box-shadow:0 0 0 4px rgba(244,197,66,.18); flex:0 0 auto;}
 
-    .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .i18nBlock{ line-height:1.45; }
+    .i18n-ja{ font-size:15px; color:var(--text); font-weight:650; }
+    .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
+    .i18n-sub div{ font-size:12px; color:var(--muted); }
+
+    .actions{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     button{
-      border-radius:16px;
-      padding:14px;
-      border:1px solid rgba(255,255,255,.14);
+      appearance:none; border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       color:var(--text);
+      border-radius:16px;
+      padding:14px 12px;
       cursor:pointer;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+      user-select:none;
     }
-    button:disabled{opacity:.5}
+    button:active{ transform: translateY(1px); }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
 
-    .overlay{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.55);
-      display:none;
-      overflow:auto;
-      z-index:9999;
-      padding:18px;
-    }
-    .overlay.show{display:block}
-    .modal{
-      background:#141d33;
-      border-radius:20px;
-      padding:16px;
-      max-width:560px;
-      margin:0 auto;
-      max-height:calc(100vh - 36px);
-      overflow:auto;
-    }
-    label{font-size:12px;color:var(--muted)}
-    input,textarea{
-      width:100%;
+    .btnText{ text-align:center; }
+    .btnText .ja{ font-size:16px; font-weight:750; }
+    .btnText .sub{ margin-top:6px; display:grid; gap:4px; font-size:12px; color:var(--muted); line-height:1.2; }
+
+    .btnIn{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
+    .btnOut{ border-color: rgba(170,182,218,.25); background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06)); }
+
+    .footerNote{ margin-top:14px; color:var(--muted); font-size:12px; line-height:1.5; }
+
+    .panel{
+      margin-top:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
       padding:12px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.18);
-      color:var(--text);
+      display:none;
     }
-    textarea{min-height:90px}
-    .err{margin-top:10px;color:#ff8a8a;font-size:12px}
+    .panel.show{ display:block; }
+
+    .form{
+      margin-top:10px;
+      display:grid;
+      gap:10px;
+    }
+    .field{ display:grid; gap:6px; }
+    label{ font-size:12px; color:var(--muted); }
+    input, textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding:12px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+
+    .checkRow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.5;
+    }
+    .checkRow input{ width:18px; height:18px; margin-top:2px; }
+
+    .panelActions{
+      margin-top:12px;
+      display:grid;
+      gap:10px;
+    }
+    .btnPrimary{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
+    .btnGhost{ border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.05); }
+
+    .debug{
+      margin-top:10px;
+      font-size:11px;
+      color:var(--muted);
+      opacity:.9;
+      line-height:1.4;
+      word-break:break-all;
+    }
   </style>
 </head>
 
 <body>
-<main class="app">
-  <section class="card">
-    <div class="header">
-      <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
-      <div id="badge" class="badge">起動中</div>
-    </div>
+  <main class="app">
+    <section class="card" aria-live="polite" aria-busy="false">
+      <div class="header">
+        <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
+        <div id="badge" class="badge">起動中</div>
+      </div>
 
-    <div class="status">
-      <span id="dot" class="dot"></span>
-      <span id="status">初期化中...</span>
-    </div>
+      <div class="status" role="status" aria-atomic="true">
+        <div class="statusRow">
+          <div id="dot" class="dot" aria-hidden="true"></div>
+          <div class="i18nBlock">
+            <div id="statusJa" class="i18n-ja">初期化中...</div>
+            <div class="i18n-sub">
+              <div id="statusEn">Initializing...</div>
+              <div id="statusZh">正在初始化...</div>
+              <div id="statusKo">초기화 중...</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="actions">
-      <button id="btnIn" disabled>入店</button>
-      <button id="btnOut" disabled>退店</button>
-    </div>
-  </section>
-</main>
+      <div class="actions">
+        <button id="btnIn" class="btnIn" disabled>
+          <div class="btnText">
+            <div class="ja">入店</div>
+            <div class="sub">
+              <div>Check in</div>
+              <div>进入</div>
+              <div>입장</div>
+            </div>
+          </div>
+        </button>
 
-<div id="overlay" class="overlay">
-  <div class="modal">
-    <h2 id="modalTitle"></h2>
-    <div id="modalBody"></div>
-    <div id="err" class="err"></div>
-    <button id="modalPrimary"></button>
-    <button id="modalSecondary"></button>
-  </div>
-</div>
+        <button id="btnOut" class="btnOut" disabled>
+          <div class="btnText">
+            <div class="ja">退店</div>
+            <div class="sub">
+              <div>Check out</div>
+              <div>离开</div>
+              <div>퇴장</div>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div id="regPanel" class="panel" aria-live="polite">
+        <div class="i18nBlock">
+          <div class="i18n-ja" id="regJa">初回のみ、会員情報（氏名 住所 電話番号）の登録が必要です。</div>
+          <div class="i18n-sub">
+            <div id="regEn">One-time registration is required (Name, Address, Phone).</div>
+            <div id="regZh">首次需要登记（姓名 住址 电话）。</div>
+            <div id="regKo">최초 1회 등록이 필요합니다 (이름 주소 전화).</div>
+          </div>
+        </div>
+
+        <div class="form">
+          <div class="field">
+            <label>氏名（フルネーム）</label>
+            <input id="f_name" type="text" placeholder="例 山田 太郎" autocomplete="name" />
+          </div>
+          <div class="field">
+            <label>電話番号</label>
+            <input id="f_phone" type="tel" placeholder="例 09012345678" autocomplete="tel" />
+          </div>
+          <div class="field">
+            <label>住所</label>
+            <textarea id="f_addr" placeholder="例 山梨県北杜市..."></textarea>
+          </div>
+          <div class="checkRow">
+            <input id="f_consent" type="checkbox" />
+            <div>
+              同意します（未精算や緊急時のご連絡、防犯上の確認のために利用します）
+              <div class="i18n-sub" style="margin-top:6px;">
+                <div>I agree (Used for contact in case of unpaid checkout or emergencies, and for security confirmation)</div>
+                <div>我同意（用于未结账或紧急情况联系及安全确认）</div>
+                <div>동의합니다 (미정산/긴급 연락 및 보안 확인 목적)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panelActions">
+          <button id="btnRegSubmit" class="btnPrimary" disabled>登録を送信</button>
+          <button id="btnRegLater" class="btnGhost">閉じる</button>
+        </div>
+      </div>
+
+      <div class="footerNote">
+        処理中はボタンが押せません。画面の案内に沿って操作してください。
+        <div class="i18n-sub" style="margin-top:8px;">
+          <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
+          <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
+          <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
+        </div>
+      </div>
+
+      <div id="debug" class="debug"></div>
+    </section>
+  </main>
 
 <script>
-const LIFF_ID = "2008818718-xTQWF4uO";
+  const LIFF_ID = "2008818718-xTQWF4uO";
+  const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbwHGto3ZK9UUETjdU3HJsqtW8pVhACN3H24DK_eBrRB8ubtDBHWANOFPpL1RdBBLdKQ/exec";
 
-/* ★ あなたの最新GAS URL */
-const GAS_EXEC_URL =
-  "https://script.google.com/macros/s/AKfycbyOzhpcuV8C85ms5TvPbaUJutsCMFaHk9uFl9iqZ7x8jsw4aWj_WGVdvHsfHadj94sB/exec";
+  const I18N = {
+    ready: [
+      "準備ができました。入店または退店を押してください。",
+      "Ready. Tap Check in or Check out.",
+      "准备就绪。请选择进入或离开。",
+      "준비 완료. 입장 또는 퇴장을 눌러 주세요."
+    ],
+    initFail: [
+      "初期化に失敗しました。通信環境と設定を確認してください。",
+      "Initialization failed. Check network and settings.",
+      "初始化失败。请检查网络和设置。",
+      "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
+    ],
+    tokenMissing: [
+      "認証情報を取得できませんでした。LINEを開き直してお試しください。",
+      "Could not get authentication info. Please reopen LINE and try again.",
+      "无法获取认证信息。请重新打开LINE后重试。",
+      "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
+    ],
+    netErr: [
+      "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
+      "Network error or timeout. Check your connection.",
+      "通信错误或超时。请检查网络。",
+      "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
+    ],
+    needProfile: [
+      "初回のみ、会員情報（氏名 住所 電話番号）の登録が必要です。",
+      "One-time registration is required (Name, Address, Phone).",
+      "首次需要登记（姓名 住址 电话）。",
+      "최초 1회 등록이 필요합니다 (이름 주소 전화)."
+    ],
+    regMissing: [
+      "未入力の項目があります。すべて入力し、同意にチェックしてください。",
+      "Missing fields. Please fill in all and check consent.",
+      "有未填写项目。请填写并勾选同意。",
+      "미입력 항목이 있습니다. 모두 입력하고 동의 체크를 해 주세요."
+    ]
+  };
 
-const badge = document.getElementById("badge");
-const statusEl = document.getElementById("status");
-const btnIn = document.getElementById("btnIn");
-const btnOut = document.getElementById("btnOut");
-const overlay = document.getElementById("overlay");
-const modalTitle = document.getElementById("modalTitle");
-const modalBody = document.getElementById("modalBody");
-const errEl = document.getElementById("err");
-const modalPrimary = document.getElementById("modalPrimary");
-const modalSecondary = document.getElementById("modalSecondary");
+  const elBadge = document.getElementById("badge");
+  const elDot = document.getElementById("dot");
+  const elStatusJa = document.getElementById("statusJa");
+  const elStatusEn = document.getElementById("statusEn");
+  const elStatusZh = document.getElementById("statusZh");
+  const elStatusKo = document.getElementById("statusKo");
+  const btnIn = document.getElementById("btnIn");
+  const btnOut = document.getElementById("btnOut");
+  const card = document.querySelector(".card");
+  const elDebug = document.getElementById("debug");
 
-function jsonp(url){
-  return new Promise((resolve,reject)=>{
-    const cb="cb_"+Math.random().toString(36).slice(2);
-    window[cb]=(d)=>{delete window[cb]; resolve(d);};
-    const s=document.createElement("script");
-    s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
-    s.onerror=()=>reject();
-    document.body.appendChild(s);
+  const regPanel = document.getElementById("regPanel");
+  const btnRegSubmit = document.getElementById("btnRegSubmit");
+  const btnRegLater = document.getElementById("btnRegLater");
+
+  function setDebugLine(text){ elDebug.textContent = text || ""; }
+
+  function setDot(state){
+    if (state === "ok") { elDot.style.background = "var(--good)"; elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)"; return; }
+    if (state === "busy") { elDot.style.background = "var(--warn)"; elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)"; return; }
+    if (state === "error") { elDot.style.background = "var(--bad)"; elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)"; return; }
+  }
+
+  function setStatusLines(lines){
+    elStatusJa.textContent = lines[0] || "";
+    elStatusEn.textContent = lines[1] || "";
+    elStatusZh.textContent = lines[2] || "";
+    elStatusKo.textContent = lines[3] || "";
+  }
+
+  function enableButtons(ready){
+    btnIn.disabled = !ready;
+    btnOut.disabled = !ready;
+  }
+
+  function setBusy(on){
+    card.setAttribute("aria-busy", on ? "true" : "false");
+    enableButtons(!on);
+  }
+
+  function showRegPanel(show){
+    regPanel.classList.toggle("show", !!show);
+    btnRegSubmit.disabled = !show;
+  }
+
+  function jsonp(url) {
+    return new Promise((resolve, reject) => {
+      const cb = "cb_" + Math.random().toString(36).slice(2);
+      window[cb] = (data) => { cleanup(); resolve(data); };
+
+      const script = document.createElement("script");
+      const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 20000);
+
+      function cleanup() {
+        clearTimeout(timer);
+        if (script.parentNode) script.parentNode.removeChild(script);
+        delete window[cb];
+      }
+
+      const sep = url.includes("?") ? "&" : "?";
+      script.src = url + sep + "callback=" + encodeURIComponent(cb);
+      script.onerror = () => { cleanup(); reject(new Error("load error")); };
+
+      document.body.appendChild(script);
+    });
+  }
+
+  async function checkProfileStatus(){
+    const idToken = liff.getIDToken();
+    if (!idToken) return { ok:false, reason:"NO_IDTOKEN" };
+    const url = GAS_EXEC_URL + "?action=profile_status&id_token=" + encodeURIComponent(idToken) + "&t=" + Date.now();
+    return await jsonp(url);
+  }
+
+  async function gateFlow(){
+    enableButtons(false);
+    showRegPanel(false);
+
+    const idTokenNow = liff.getIDToken();
+    setDebugLine("debug: idToken=" + (idTokenNow ? "ok" : "null") + " / " + location.href);
+
+    const prof = await checkProfileStatus();
+    if (!(prof && prof.ok && prof.has_profile)) {
+      setDot("busy");
+      elBadge.textContent = "準備OK";
+      setStatusLines(I18N.needProfile);
+      showRegPanel(true);
+      enableButtons(false);
+      return;
+    }
+
+    setDot("ok");
+    elBadge.textContent = "準備OK";
+    setStatusLines(I18N.ready);
+    showRegPanel(false);
+    enableButtons(true);
+  }
+
+  async function callGAS(action){
+    setBusy(true);
+    elBadge.textContent = "処理中";
+    setDot("busy");
+    setStatusLines([
+      "通信中です。しばらくお待ちください。",
+      "Communicating... Please wait.",
+      "正在通信…请稍候。",
+      "통신 중입니다. 잠시만 기다려 주세요."
+    ]);
+
+    const idToken = liff.getIDToken();
+    if (!idToken) {
+      setBusy(false);
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.tokenMissing);
+      return;
+    }
+
+    try{
+      const url = GAS_EXEC_URL + "?action=" + encodeURIComponent(action) + "&id_token=" + encodeURIComponent(idToken) + "&t=" + Date.now();
+      const res = await jsonp(url);
+
+      if (res && res.ok){
+        elBadge.textContent = "完了";
+        setDot("ok");
+        const msgJa = res.message || "完了しました。";
+        setStatusLines([
+          msgJa,
+          "Please operate the door now. Watch your step.",
+          "请打开门并通过。请注意脚下的台阶。",
+          "문을 열고 지나가 주세요. 단차에 주의하세요."
+        ]);
+      } else {
+        if (res && res.code === "DENY_NEED_PROFILE") {
+          await gateFlow();
+          return;
+        }
+        elBadge.textContent = "エラー";
+        setDot("error");
+        const msg = (res && res.message) ? res.message : "エラーが発生しました。";
+        setStatusLines([
+          msg + " もう一度お試しください。",
+          "An error occurred. Please try again.",
+          "发生错误。请重试。",
+          "오류가 발생했습니다. 다시 시도해 주세요."
+        ]);
+      }
+    } catch(e){
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.netErr);
+    } finally{
+      setBusy(false);
+    }
+  }
+
+  btnIn.addEventListener("click", () => callGAS("in"));
+  btnOut.addEventListener("click", () => callGAS("out"));
+
+  btnRegLater.addEventListener("click", () => {
+    showRegPanel(false);
+    setDot("error");
+    setStatusLines([
+      "会員情報の登録が完了していないため、入店退店はできません。",
+      "You can't proceed without registration.",
+      "未完成登记，无法继续。",
+      "등록이 완료되지 않아 진행할 수 없습니다."
+    ]);
+    enableButtons(false);
   });
-}
 
-function showModal(title, body, pText, pFn, sText, sFn){
-  modalTitle.textContent=title;
-  modalBody.innerHTML=body;
-  errEl.textContent="";
-  modalPrimary.textContent=pText;
-  modalSecondary.textContent=sText;
-  modalPrimary.onclick=pFn;
-  modalSecondary.onclick=sFn;
-  overlay.classList.add("show");
-}
+  btnRegSubmit.addEventListener("click", async () => {
+    const fullName = document.getElementById("f_name").value.trim();
+    const phone = document.getElementById("f_phone").value.trim();
+    const address = document.getElementById("f_addr").value.trim();
+    const consent = document.getElementById("f_consent").checked;
 
-function hideModal(){ overlay.classList.remove("show"); }
+    if (!fullName || !phone || !address || !consent) {
+      setDot("error");
+      setStatusLines(I18N.regMissing);
+      return;
+    }
 
-async function call(action){
-  const token=liff.getIDToken();
-  const res=await jsonp(GAS_EXEC_URL+"?action="+action+"&id_token="+encodeURIComponent(token));
-  statusEl.textContent=res.message||"";
-}
+    const idToken = liff.getIDToken();
+    if (!idToken) {
+      setDot("error");
+      setStatusLines(I18N.tokenMissing);
+      return;
+    }
 
-async function init(){
-  await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser:true });
-  badge.textContent="準備OK";
-  statusEl.textContent="入店または退店を選択してください。";
-  btnIn.disabled=false;
-  btnOut.disabled=false;
-}
+    setBusy(true);
+    elBadge.textContent = "送信中";
+    setDot("busy");
 
-btnIn.onclick=()=>call("in");
-btnOut.onclick=()=>call("out");
+    try{
+      const url =
+        GAS_EXEC_URL +
+        "?action=profile_set" +
+        "&id_token=" + encodeURIComponent(idToken) +
+        "&full_name=" + encodeURIComponent(fullName) +
+        "&phone=" + encodeURIComponent(phone) +
+        "&address=" + encodeURIComponent(address) +
+        "&consent=" + encodeURIComponent(String(consent)) +
+        "&t=" + Date.now();
 
-init();
+      const res = await jsonp(url);
+      if (res && res.ok) {
+        setDot("ok");
+        setStatusLines([
+          "登録が完了しました。入店または退店を押してください。",
+          "Registration completed. Tap Check in or Check out.",
+          "登记完成。请选择进入或离开。",
+          "등록 완료. 입장 또는 퇴장을 눌러 주세요."
+        ]);
+        await gateFlow();
+      } else {
+        setDot("error");
+        setStatusLines([
+          (res && res.message) ? res.message : "登録に失敗しました。もう一度お試しください。",
+          "Registration failed. Please try again.",
+          "登记失败。请重试。",
+          "등록에 실패했습니다. 다시 시도해 주세요."
+        ]);
+      }
+    } catch(e){
+      setDot("error");
+      setStatusLines(I18N.netErr);
+    } finally {
+      setBusy(false);
+      elBadge.textContent = "準備OK";
+    }
+  });
+
+  async function init(){
+    elBadge.textContent = "起動中";
+    setDot("busy");
+    setStatusLines(["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."]);
+    enableButtons(false);
+    showRegPanel(false);
+
+    try{
+      await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+      await gateFlow();
+    }catch(e){
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.initFail);
+      enableButtons(false);
+      showRegPanel(false);
+    }
+  }
+
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible") {
+      await gateFlow();
+    }
+  });
+
+  init();
 </script>
 </body>
 </html>
