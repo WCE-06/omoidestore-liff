@@ -122,6 +122,10 @@
   .btnIn{border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));}
   .btnOut{border-color: rgba(170,182,218,.25); background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06));}
 
+  .btnText{ text-align:center; }
+  .btnText .ja{ font-size:16px; font-weight:750; }
+  .btnText .sub{ margin-top:6px; display:grid; gap:4px; font-size:12px; color:var(--muted); line-height:1.2; }
+
   .overlay{
     position:fixed; inset:0;
     background:rgba(0,0,0,.55);
@@ -290,13 +294,27 @@
 
     <div id="panelActions" class="panel">
       <div class="actions">
-        <button id="btnIn" class="btnIn" disabled type="button">入店</button>
-        <button id="btnOut" class="btnOut" disabled type="button">退店</button>
-      </div>
-      <div class="i18n-sub" style="margin-top:10px;">
-        <div>Check in / Check out</div>
-        <div>进入 / 离开</div>
-        <div>입장 / 퇴장</div>
+        <button id="btnIn" class="btnIn" disabled type="button">
+          <div class="btnText">
+            <div class="ja">入店</div>
+            <div class="sub">
+              <div>Check in</div>
+              <div>进入</div>
+              <div>입장</div>
+            </div>
+          </div>
+        </button>
+
+        <button id="btnOut" class="btnOut" disabled type="button">
+          <div class="btnText">
+            <div class="ja">退店</div>
+            <div class="sub">
+              <div>Check out</div>
+              <div>离开</div>
+              <div>퇴장</div>
+            </div>
+          </div>
+        </button>
       </div>
     </div>
 
@@ -451,6 +469,11 @@
 
   function setBusy(on){
     document.querySelector(".card").setAttribute("aria-busy", on ? "true" : "false");
+  }
+
+  function scrollToTopForFeedback(){
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    document.querySelector(".card").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function clearErrors(){
@@ -642,6 +665,8 @@
   }
 
   btnRegSubmit.addEventListener("click", async () => {
+    scrollToTopForFeedback();
+
     const v = clientValidate();
     if (!v.ok){
       elBadge.textContent = "エラー";
