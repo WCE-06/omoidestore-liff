@@ -127,7 +127,6 @@
         border-color: rgba(170,182,218,.25);
         background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06));
       }
-      .icon{ width:18px; height:18px; display:inline-block; opacity:.9; }
 
       .footerNote{
         margin-top: 14px;
@@ -157,32 +156,35 @@
         box-shadow: var(--shadow);
         padding: 16px;
       }
-      .modalTop{ display:flex; align-items:center; gap:12px; }
-      .spinner{
-        width:22px; height:22px;
-        border: 3px solid rgba(255,255,255,.20);
-        border-top-color: rgba(255,255,255,.85);
-        border-radius: 999px;
-        animation: spin 1s linear infinite;
-        flex:0 0 auto;
+      .modalTop{ display:flex; align-items:center; gap:12px;
+        justify-content: space-between;
       }
-      @keyframes spin { to { transform: rotate(360deg);} }
-
       .modalTitle{ margin:0; font-size: 15px; }
+
+      .pill{
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.14);
+        color: var(--muted);
+        background: rgba(255,255,255,.04);
+        white-space:nowrap;
+      }
+
       .modalBody{ margin-top:10px; }
       .modalActions{
         display:grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 10px;
         margin-top: 14px;
-      }
-      .btnGhost{
-        border-color: rgba(255,255,255,.16);
-        background: rgba(255,255,255,.05);
       }
       .btnPrimary{
         border-color: rgba(29,185,84,.35);
         background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
+      }
+      .btnGhost{
+        border-color: rgba(255,255,255,.16);
+        background: rgba(255,255,255,.05);
       }
       .srOnly{
         position:absolute;
@@ -219,7 +221,6 @@
         <div class="actions">
           <button id="btnIn" class="btnIn" disabled>
             <div class="btnLabel">
-              <span class="icon" aria-hidden="true">⟲</span>
               <div class="btnText">
                 <div class="ja">入店</div>
                 <div class="sub">
@@ -233,7 +234,6 @@
 
           <button id="btnOut" class="btnOut" disabled>
             <div class="btnLabel">
-              <span class="icon" aria-hidden="true">⟲</span>
               <div class="btnText">
                 <div class="ja">退店</div>
                 <div class="sub">
@@ -260,8 +260,8 @@
     <div id="overlay" class="overlay" aria-hidden="true">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modalTop">
-          <div id="spinner" class="spinner" aria-hidden="true"></div>
           <h2 id="modalTitle" class="modalTitle">確認</h2>
+          <div id="modalPill" class="pill">案内</div>
         </div>
 
         <div class="modalBody">
@@ -274,28 +274,9 @@
             </div>
           </div>
 
-          <div id="modalActions" class="modalActions" style="display:none;">
-            <button id="btnCancel" class="btnGhost">
-              <div class="btnText">
-                <div class="ja" id="btnCancelJa">やめる</div>
-                <div class="sub">
-                  <div id="btnCancelEn">Cancel</div>
-                  <div id="btnCancelZh">取消</div>
-                  <div id="btnCancelKo">취소</div>
-                </div>
-              </div>
-            </button>
-
-            <button id="btnConfirm" class="btnPrimary">
-              <div class="btnText">
-                <div class="ja" id="btnConfirmJa">実行</div>
-                <div class="sub">
-                  <div id="btnConfirmEn">Proceed</div>
-                  <div id="btnConfirmZh">执行</div>
-                  <div id="btnConfirmKo">실행</div>
-                </div>
-              </div>
-            </button>
+          <div id="modalActions" class="modalActions">
+            <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
+            <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
           </div>
 
           <div class="srOnly" id="srLive" aria-live="assertive"></div>
@@ -309,94 +290,81 @@
       const GAS_EXEC_URL =
         "https://script.google.com/macros/s/AKfycbygnqThxDzD1gpiEwlFhn44-DWLNjXTT7a7eCXVbTOJJsbvxlQmS5rOBUWw1zheynRr/exec";
 
-      const UI = {
-        boot: {
-          badge: "起動中",
-          status: ["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."],
-        },
-        ready: {
-          badge: "準備OK",
-          status: [
-            "準備ができました。入店または退店を押してください。",
-            "Ready. Tap Check in or Check out.",
-            "准备就绪。请选择进入或离开。",
-            "준비 완료. 입장 또는 퇴장을 눌러 주세요."
-          ],
-        },
-        initFail: {
-          badge: "エラー",
-          status: [
-            "初期化に失敗しました。通信環境と設定を確認してください。",
-            "Initialization failed. Check network and settings.",
-            "初始化失败。请检查网络和设置。",
-            "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
-          ],
-        },
+      const OA_ID_WITH_AT = "@420taqgx";
+      const OA_ADD_FRIEND_URL = "https://line.me/R/ti/p/" + encodeURIComponent(OA_ID_WITH_AT);
+
+      const I18N = {
+        ready: [
+          "準備ができました。入店または退店を押してください。",
+          "Ready. Tap Check in or Check out.",
+          "准备就绪。请选择进入或离开。",
+          "준비 완료. 입장 또는 퇴장을 눌러 주세요."
+        ],
+        initFail: [
+          "初期化に失敗しました。通信環境と設定を確認してください。",
+          "Initialization failed. Check network and settings.",
+          "初始化失败。请检查网络和设置。",
+          "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
+        ],
+        tokenMissing: [
+          "認証情報を取得できませんでした。LINEを開き直してお試しください。",
+          "Could not get authentication info. Please reopen LINE and try again.",
+          "无法获取认证信息。请重新打开LINE后重试。",
+          "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
+        ],
+        netErr: [
+          "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
+          "Network error or timeout. Check your connection.",
+          "通信错误或超时。请检查网络。",
+          "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
+        ],
         confirmIn: {
           title: "確認",
+          pill: "入店",
           body: [
             "入店を記録します。よろしいですか。",
             "You are about to check in. Continue?",
             "将记录进入。继续吗？",
             "입장을 기록합니다. 진행할까요?"
           ],
-          confirm: ["入店する", "Check in", "进入", "입장"],
-          cancel: ["やめる", "Cancel", "取消", "취소"],
+          primary: "入店する",
+          secondary: "やめる"
         },
         confirmOut: {
           title: "確認",
+          pill: "退店",
           body: [
             "退店を記録します。よろしいですか。",
             "You are about to check out. Continue?",
             "将记录离开。继续吗？",
             "퇴장을 기록합니다. 진행할까요?"
           ],
-          confirm: ["退店する", "Check out", "离开", "퇴장"],
-          cancel: ["やめる", "Cancel", "取消", "취소"],
+          primary: "退店する",
+          secondary: "やめる"
         },
-        busyIn: {
-          badge: "処理中",
-          title: "入店処理中",
+        friendGate: {
+          title: "友だち追加",
+          pill: "初回のみ",
           body: [
-            "通信中です。しばらくお待ちください。",
-            "Communicating... Please wait.",
-            "正在通信…请稍候。",
-            "통신 중입니다. 잠시만 기다려 주세요."
+            "ご利用には公式LINEの友だち追加が必要です。下のボタンから追加してください。",
+            "To continue, please add our official LINE account using the button below.",
+            "继续使用前，请先通过下方按钮添加我们的官方LINE账号。",
+            "계속하려면 아래 버튼으로 공식 LINE 계정을 추가해 주세요."
           ],
+          primary: "友だち追加を開く",
+          secondary: "追加できたら再チェック"
         },
-        busyOut: {
-          badge: "処理中",
-          title: "退店処理中",
+        friendChecking: {
+          title: "確認中",
+          pill: "処理中",
           body: [
-            "通信中です。しばらくお待ちください。",
-            "Communicating... Please wait.",
-            "正在通信…请稍候。",
-            "통신 중입니다. 잠시만 기다려 주세요."
+            "友だち追加状況を確認しています。少しお待ちください。",
+            "Checking friendship status. Please wait.",
+            "正在确认好友状态…请稍候。",
+            "친구 상태를 확인 중입니다. 잠시만 기다려 주세요."
           ],
-        },
-        doneOk: {
-          badge: "完了",
-        },
-        doneErr: {
-          badge: "エラー",
-        },
-        netErr: {
-          badge: "エラー",
-          status: [
-            "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
-            "Network error or timeout. Check your connection.",
-            "通信错误或超时。请检查网络。",
-            "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
-          ],
-        },
-        tokenMissing: {
-          badge: "エラー",
-          status: [
-            "認証情報を取得できませんでした。LINEを開き直してお試しください。",
-            "Could not get authentication info. Please reopen LINE and try again.",
-            "无法获取认证信息。请重新打开LINE后重试。",
-            "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
-          ],
+          primary: "再チェック",
+          secondary: "閉じる"
         }
       };
 
@@ -406,34 +374,23 @@
       const elStatusEn = document.getElementById("statusEn");
       const elStatusZh = document.getElementById("statusZh");
       const elStatusKo = document.getElementById("statusKo");
-
       const btnIn = document.getElementById("btnIn");
       const btnOut = document.getElementById("btnOut");
+      const card = document.querySelector(".card");
 
       const overlay = document.getElementById("overlay");
-      const spinner = document.getElementById("spinner");
       const modalTitle = document.getElementById("modalTitle");
+      const modalPill = document.getElementById("modalPill");
       const modalJa = document.getElementById("modalJa");
       const modalEn = document.getElementById("modalEn");
       const modalZh = document.getElementById("modalZh");
       const modalKo = document.getElementById("modalKo");
-
-      const modalActions = document.getElementById("modalActions");
-      const btnCancel = document.getElementById("btnCancel");
-      const btnConfirm = document.getElementById("btnConfirm");
-
-      const btnConfirmJa = document.getElementById("btnConfirmJa");
-      const btnConfirmEn = document.getElementById("btnConfirmEn");
-      const btnConfirmZh = document.getElementById("btnConfirmZh");
-      const btnConfirmKo = document.getElementById("btnConfirmKo");
-
-      const btnCancelJa = document.getElementById("btnCancelJa");
-      const btnCancelEn = document.getElementById("btnCancelEn");
-      const btnCancelZh = document.getElementById("btnCancelZh");
-      const btnCancelKo = document.getElementById("btnCancelKo");
-
+      const btnModalPrimary = document.getElementById("btnModalPrimary");
+      const btnModalSecondary = document.getElementById("btnModalSecondary");
       const srLive = document.getElementById("srLive");
-      const card = document.querySelector(".card");
+
+      let friendPollTimer = null;
+      let friendPollCount = 0;
 
       function setDot(state){
         if (state === "ok") {
@@ -474,34 +431,108 @@
         enableButtons(!on);
       }
 
-      function setModalText(title, bodyLines){
-        modalTitle.textContent = title || "";
-        modalJa.textContent = bodyLines[0] || "";
-        modalEn.textContent = bodyLines[1] || "";
-        modalZh.textContent = bodyLines[2] || "";
-        modalKo.textContent = bodyLines[3] || "";
+      function setModal(cfg){
+        modalTitle.textContent = cfg.title || "";
+        modalPill.textContent = cfg.pill || "";
+        modalJa.textContent = (cfg.body && cfg.body[0]) || "";
+        modalEn.textContent = (cfg.body && cfg.body[1]) || "";
+        modalZh.textContent = (cfg.body && cfg.body[2]) || "";
+        modalKo.textContent = (cfg.body && cfg.body[3]) || "";
+        srLive.textContent = (cfg.body && cfg.body[0]) || "";
+
+        btnModalPrimary.textContent = cfg.primary || "";
+        btnModalSecondary.textContent = cfg.secondary || "";
+
+        btnModalPrimary.disabled = false;
+        btnModalSecondary.disabled = false;
       }
 
-      function modeConfirm(cfg){
-        spinner.style.display = "none";
-        modalActions.style.display = "grid";
-        setModalText(cfg.title, cfg.body);
-
-        btnConfirmJa.textContent = cfg.confirm[0];
-        btnConfirmEn.textContent = cfg.confirm[1];
-        btnConfirmZh.textContent = cfg.confirm[2];
-        btnConfirmKo.textContent = cfg.confirm[3];
-
-        btnCancelJa.textContent = cfg.cancel[0];
-        btnCancelEn.textContent = cfg.cancel[1];
-        btnCancelZh.textContent = cfg.cancel[2];
-        btnCancelKo.textContent = cfg.cancel[3];
+      function clearFriendPoll(){
+        if (friendPollTimer) {
+          clearInterval(friendPollTimer);
+          friendPollTimer = null;
+        }
+        friendPollCount = 0;
       }
 
-      function modeBusy(cfg){
-        spinner.style.display = "block";
-        modalActions.style.display = "none";
-        setModalText(cfg.title, cfg.body);
+      async function checkFriendshipOnce(){
+        try{
+          const r = await liff.getFriendship();
+          return !!(r && r.friendFlag);
+        } catch(e){
+          return null;
+        }
+      }
+
+      async function ensureFriendshipOrGate(){
+        const friend = await checkFriendshipOnce();
+
+        if (friend === true) {
+          clearFriendPoll();
+          elBadge.textContent = "準備OK";
+          setDot("ok");
+          setStatusLines(I18N.ready);
+          showOverlay(false);
+          enableButtons(true);
+          return;
+        }
+
+        showOverlay(true);
+        enableButtons(false);
+        setBusy(false);
+
+        setModal(I18N.friendGate);
+
+        btnModalPrimary.onclick = async () => {
+          try{
+            await liff.openWindow({ url: OA_ADD_FRIEND_URL, external: true });
+          } catch(e){
+            window.open(OA_ADD_FRIEND_URL, "_blank");
+          }
+          startFriendPoll();
+        };
+
+        btnModalSecondary.onclick = async () => {
+          await manualRecheckFriendship();
+        };
+
+        startFriendPoll();
+      }
+
+      function startFriendPoll(){
+        clearFriendPoll();
+
+        friendPollTimer = setInterval(async () => {
+          friendPollCount++;
+          if (friendPollCount > 40) {
+            clearFriendPoll();
+            return;
+          }
+          const friend = await checkFriendshipOnce();
+          if (friend === true) {
+            clearFriendPoll();
+            elBadge.textContent = "準備OK";
+            setDot("ok");
+            setStatusLines(I18N.ready);
+            showOverlay(false);
+            enableButtons(true);
+          }
+        }, 1500);
+      }
+
+      async function manualRecheckFriendship(){
+        setModal(I18N.friendChecking);
+        const friend = await checkFriendshipOnce();
+        if (friend === true) {
+          elBadge.textContent = "準備OK";
+          setDot("ok");
+          setStatusLines(I18N.ready);
+          showOverlay(false);
+          enableButtons(true);
+          clearFriendPoll();
+          return;
+        }
+        setModal(I18N.friendGate);
       }
 
       function jsonp(url) {
@@ -526,67 +557,25 @@
         });
       }
 
-      async function init(){
-        elBadge.textContent = UI.boot.badge;
-        setDot("boot");
-        setStatusLines(UI.boot.status);
-        enableButtons(false);
-
-        try{
-          await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
-          elBadge.textContent = UI.ready.badge;
-          setDot("ok");
-          setStatusLines(UI.ready.status);
-          enableButtons(true);
-        }catch(e){
-          elBadge.textContent = UI.initFail.badge;
-          setDot("error");
-          setStatusLines(UI.initFail.status);
-          enableButtons(false);
-        }
-      }
-
-      function confirmAction(action){
-        const cfg = action === "in" ? UI.confirmIn : UI.confirmOut;
-        showOverlay(true);
-        modeConfirm(cfg);
-
-        return new Promise((resolve) => {
-          const onCancel = () => { cleanup(); resolve(false); };
-          const onConfirm = () => { cleanup(); resolve(true); };
-
-          function cleanup(){
-            btnCancel.removeEventListener("click", onCancel);
-            btnConfirm.removeEventListener("click", onConfirm);
-            showOverlay(false);
-          }
-
-          btnCancel.addEventListener("click", onCancel);
-          btnConfirm.addEventListener("click", onConfirm);
-        });
-      }
-
       async function callGAS(action){
-        const ok = await confirmAction(action);
-        if (!ok) return;
+        setBusy(true);
+        elBadge.textContent = "処理中";
+        setDot("busy");
+        setStatusLines([
+          "通信中です。しばらくお待ちください。",
+          "Communicating... Please wait.",
+          "正在通信…请稍候。",
+          "통신 중입니다. 잠시만 기다려 주세요."
+        ]);
 
         const idToken = liff.getIDToken();
         if (!idToken) {
-          elBadge.textContent = UI.tokenMissing.badge;
+          setBusy(false);
+          elBadge.textContent = "エラー";
           setDot("error");
-          setStatusLines(UI.tokenMissing.status);
+          setStatusLines(I18N.tokenMissing);
           return;
         }
-
-        const busyCfg = action === "in" ? UI.busyIn : UI.busyOut;
-
-        showOverlay(true);
-        modeBusy(busyCfg);
-        setBusy(true);
-
-        elBadge.textContent = busyCfg.badge;
-        setDot("busy");
-        setStatusLines(busyCfg.body);
 
         try{
           const url =
@@ -598,43 +587,89 @@
           const res = await jsonp(url);
 
           if (res && res.ok){
-            elBadge.textContent = UI.doneOk.badge;
+            elBadge.textContent = "完了";
             setDot("ok");
 
             const msgJa = res.message || "完了しました。";
-
             setStatusLines([
               msgJa,
-              "Please open the door and pass through. Watch your step.",
+              "Please operate the door now. Watch your step.",
               "请打开门并通过。请注意脚下的台阶。",
               "문을 열고 지나가 주세요. 단차에 주의하세요."
             ]);
           } else {
-            elBadge.textContent = UI.doneErr.badge;
+            elBadge.textContent = "エラー";
             setDot("error");
-
-            const msgJa = (res && res.message) ? res.message : "エラーが発生しました。";
-
+            const msg = (res && res.message) ? res.message : "エラーが発生しました。";
             setStatusLines([
-              msgJa,
+              msg + " もう一度お試しください。",
               "An error occurred. Please try again.",
               "发生错误。请重试。",
               "오류가 발생했습니다. 다시 시도해 주세요."
             ]);
           }
         } catch(e){
-          elBadge.textContent = UI.netErr.badge;
+          elBadge.textContent = "エラー";
           setDot("error");
-          setStatusLines(UI.netErr.status);
+          setStatusLines(I18N.netErr);
         } finally{
           setBusy(false);
-          showOverlay(false);
-          enableButtons(true);
         }
       }
 
-      btnIn.addEventListener("click", () => callGAS("in"));
-      btnOut.addEventListener("click", () => callGAS("out"));
+      function openConfirm(action){
+        showOverlay(true);
+        enableButtons(false);
+
+        const cfg = action === "in" ? I18N.confirmIn : I18N.confirmOut;
+        setModal(cfg);
+
+        btnModalPrimary.onclick = async () => {
+          showOverlay(false);
+          enableButtons(false);
+          await callGAS(action);
+          enableButtons(true);
+        };
+
+        btnModalSecondary.onclick = () => {
+          showOverlay(false);
+          enableButtons(true);
+        };
+      }
+
+      async function init(){
+        elBadge.textContent = "起動中";
+        setDot("boot");
+        setStatusLines(["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."]);
+        enableButtons(false);
+
+        try{
+          await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+          await ensureFriendshipOrGate();
+        }catch(e){
+          elBadge.textContent = "エラー";
+          setDot("error");
+          setStatusLines(I18N.initFail);
+          enableButtons(false);
+        }
+      }
+
+      btnIn.addEventListener("click", () => openConfirm("in"));
+      btnOut.addEventListener("click", () => openConfirm("out"));
+
+      document.addEventListener("visibilitychange", async () => {
+        if (document.visibilityState === "visible") {
+          const friend = await checkFriendshipOnce();
+          if (friend === true) {
+            clearFriendPoll();
+            elBadge.textContent = "準備OK";
+            setDot("ok");
+            setStatusLines(I18N.ready);
+            showOverlay(false);
+            enableButtons(true);
+          }
+        }
+      });
 
       init();
     </script>
