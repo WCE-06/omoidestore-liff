@@ -62,6 +62,7 @@
         background: rgba(255,255,255,.04);
         white-space:nowrap;
       }
+
       .status{
         border: 1px solid rgba(255,255,255,.10);
         background: rgba(255,255,255,.04);
@@ -81,6 +82,7 @@
         box-shadow: 0 0 0 4px rgba(244,197,66,.18);
         flex:0 0 auto;
       }
+
       .i18nBlock{ line-height:1.45; }
       .i18n-ja{ font-size: 15px; color: var(--text); font-weight: 650; }
       .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
@@ -165,6 +167,7 @@
         flex:0 0 auto;
       }
       @keyframes spin { to { transform: rotate(360deg);} }
+
       .modalTitle{ margin:0; font-size: 15px; }
       .modalBody{ margin-top:10px; }
       .modalActions{
@@ -373,21 +376,9 @@
         },
         doneOk: {
           badge: "完了",
-          sub: [
-            "扉の操作を行ってください。",
-            "Please operate the door now.",
-            "请操作门。",
-            "문을 조작해 주세요."
-          ],
         },
         doneErr: {
           badge: "エラー",
-          sub: [
-            "もう一度お試しください。",
-            "Please try again.",
-            "请重试。",
-            "다시 시도해 주세요."
-          ],
         },
         netErr: {
           badge: "エラー",
@@ -609,22 +600,26 @@
           if (res && res.ok){
             elBadge.textContent = UI.doneOk.badge;
             setDot("ok");
-            const msg = res.message || "完了しました。";
+
+            const msgJa = res.message || "完了しました。";
+
             setStatusLines([
-              msg + " " + UI.doneOk.sub[0],
-              msg + " " + UI.doneOk.sub[1],
-              msg + " " + UI.doneOk.sub[2],
-              msg + " " + UI.doneOk.sub[3]
+              msgJa,
+              "Please open the door and pass through. Watch your step.",
+              "请打开门并通过。请注意脚下的台阶。",
+              "문을 열고 지나가 주세요. 단차에 주의하세요."
             ]);
           } else {
             elBadge.textContent = UI.doneErr.badge;
             setDot("error");
-            const msg = (res && res.message) ? res.message : "エラーが発生しました。";
+
+            const msgJa = (res && res.message) ? res.message : "エラーが発生しました。";
+
             setStatusLines([
-              msg + " " + UI.doneErr.sub[0],
-              msg + " " + UI.doneErr.sub[1],
-              msg + " " + UI.doneErr.sub[2],
-              msg + " " + UI.doneErr.sub[3]
+              msgJa,
+              "An error occurred. Please try again.",
+              "发生错误。请重试。",
+              "오류가 발생했습니다. 다시 시도해 주세요."
             ]);
           }
         } catch(e){
