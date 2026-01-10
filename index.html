@@ -62,7 +62,6 @@
         background: rgba(255,255,255,.04);
         white-space:nowrap;
       }
-
       .status{
         border: 1px solid rgba(255,255,255,.10);
         background: rgba(255,255,255,.04);
@@ -82,7 +81,6 @@
         box-shadow: 0 0 0 4px rgba(244,197,66,.18);
         flex:0 0 auto;
       }
-
       .i18nBlock{ line-height:1.45; }
       .i18n-ja{ font-size: 15px; color: var(--text); font-weight: 650; }
       .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
@@ -167,7 +165,6 @@
         flex:0 0 auto;
       }
       @keyframes spin { to { transform: rotate(360deg);} }
-
       .modalTitle{ margin:0; font-size: 15px; }
       .modalBody{ margin-top:10px; }
       .modalActions{
@@ -307,18 +304,12 @@
       const LIFF_ID = "2008818718-xTQWF4uO";
 
       const GAS_EXEC_URL =
-        "https://script.google.com/macros/s/AKfycbx_F2q32P4ytijyhpN1jAaO8jbociI0USpzaD0I3TwWWWKI4b5CyH_AB0nmwlh39z2y/exec";
+        "https://script.google.com/macros/s/AKfycbygnqThxDzD1gpiEwlFhn44-DWLNjXTT7a7eCXVbTOJJsbvxlQmS5rOBUWw1zheynRr/exec";
 
       const UI = {
         boot: {
           badge: "起動中",
           status: ["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."],
-          note: [
-            "処理中はボタンが押せません。画面の案内に沿って操作してください。",
-            "Buttons are disabled during processing. Please follow the on-screen instructions.",
-            "处理过程中按钮不可用。请按照屏幕提示操作。",
-            "처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요."
-          ],
         },
         ready: {
           badge: "準備OK",
@@ -383,7 +374,7 @@
         doneOk: {
           badge: "完了",
           sub: [
-            "扉のセキュリティーアラートが解除されました。段差がございますので、足元にお気をつけください。",
+            "扉の操作を行ってください。",
             "Please operate the door now.",
             "请操作门。",
             "문을 조작해 주세요."
@@ -420,7 +411,6 @@
 
       const elBadge = document.getElementById("badge");
       const elDot = document.getElementById("dot");
-
       const elStatusJa = document.getElementById("statusJa");
       const elStatusEn = document.getElementById("statusEn");
       const elStatusZh = document.getElementById("statusZh");
@@ -432,7 +422,6 @@
       const overlay = document.getElementById("overlay");
       const spinner = document.getElementById("spinner");
       const modalTitle = document.getElementById("modalTitle");
-
       const modalJa = document.getElementById("modalJa");
       const modalEn = document.getElementById("modalEn");
       const modalZh = document.getElementById("modalZh");
