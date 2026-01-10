@@ -67,6 +67,7 @@
     white-space: pre-line;
   }
 
+  form{margin:0}
   .form{display:grid; gap:10px;}
   .field{display:grid; gap:6px;}
   label{font-size:12px; color:var(--muted);}
@@ -81,7 +82,6 @@
     outline:none;
   }
   textarea{min-height:90px; resize:vertical;}
-
   .nameGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
 
   .agreeRow{
@@ -92,6 +92,9 @@
     color:var(--muted);
     font-size:12px;
     margin-top:8px;
+    padding:8px 10px;
+    border-radius:14px;
+    border:1px solid transparent;
   }
   .agreeRow input{width:18px; height:18px; margin-top:2px;}
   .agreeText{flex:1;}
@@ -161,6 +164,15 @@
   .badgeSmall{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap;}
 
   .srOnly{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+
+  .errField{
+    border-color: rgba(255,90,106,.9) !important;
+    box-shadow: 0 0 0 4px rgba(255,90,106,.20) !important;
+  }
+  .errRow{
+    border-color: rgba(255,90,106,.9) !important;
+    background: rgba(255,90,106,.10) !important;
+  }
 </style>
 </head>
 
@@ -205,79 +217,81 @@
         </div>
       </div>
 
-      <div class="form">
-        <div class="nameGrid">
-          <div class="field">
-            <label>姓</label>
-            <input id="f_sei" type="text" autocomplete="family-name" />
-          </div>
-          <div class="field">
-            <label>名</label>
-            <input id="f_mei" type="text" autocomplete="given-name" />
-          </div>
-        </div>
-
-        <div class="nameGrid">
-          <div class="field">
-            <label>姓（カナ）</label>
-            <input id="f_sei_kana" type="text" inputmode="kana" />
-          </div>
-          <div class="field">
-            <label>名（カナ）</label>
-            <input id="f_mei_kana" type="text" inputmode="kana" />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>電話番号</label>
-          <input id="f_phone" type="tel" autocomplete="tel" />
-        </div>
-
-        <div class="field">
-          <label>住所</label>
-          <textarea id="f_address" autocomplete="street-address"></textarea>
-        </div>
-
-        <div class="agreeRow">
-          <input id="f_agree_gate" type="checkbox" disabled />
-          <div class="agreeText">
-            <div>
-              <span id="openTerms" class="linkBtn" role="button" tabindex="0">利用規約を確認する</span>
-              を開いて最後までスクロールすると、同意チェックが有効になります。
+      <form id="regForm" novalidate>
+        <div class="form">
+          <div class="nameGrid">
+            <div class="field">
+              <label>姓</label>
+              <input id="f_sei" type="text" autocomplete="family-name" required />
             </div>
-            <div class="i18n-sub" style="margin-top:6px;">
-              <div>Open the Terms and scroll to the bottom to enable consent.</div>
-              <div>打开条款并滚动到底部以启用同意。</div>
-              <div>약관을 열고 끝까지 스크롤하면 동의가 활성화됩니다.</div>
+            <div class="field">
+              <label>名</label>
+              <input id="f_mei" type="text" autocomplete="given-name" required />
             </div>
           </div>
-        </div>
 
-        <div class="agreeRow" style="margin-top:6px;">
-          <input id="f_consent" type="checkbox" disabled />
-          <div class="agreeText">
-            本システムが、
-            COMPASSION WORLDの平和な世界を守るために
-            利用されることに同意します
-            <div class="i18n-sub" style="margin-top:6px;">
-              <div>I agree this system is used to keep COMPASSION WORLD peaceful and welcoming.</div>
-              <div>我同意本系统用于守护COMPASSION WORLD的平和与舒适。</div>
-              <div>본 시스템이 COMPASSION WORLD의 평화로운 환경을 지키기 위해 사용됨에 동의합니다.</div>
+          <div class="nameGrid">
+            <div class="field">
+              <label>姓（カナ）</label>
+              <input id="f_sei_kana" type="text" inputmode="kana" required />
+            </div>
+            <div class="field">
+              <label>名（カナ）</label>
+              <input id="f_mei_kana" type="text" inputmode="kana" required />
             </div>
           </div>
-        </div>
 
-        <div class="actions">
-          <button id="btnRegSubmit" class="btnPrimary" disabled>登録を送信</button>
-          <button id="btnRegCancel" disabled>閉じる</button>
+          <div class="field">
+            <label>電話番号</label>
+            <input id="f_phone" type="tel" autocomplete="tel" required />
+          </div>
+
+          <div class="field">
+            <label>住所</label>
+            <textarea id="f_address" autocomplete="street-address" required></textarea>
+          </div>
+
+          <div id="rowAgreeGate" class="agreeRow">
+            <input id="f_agree_gate" type="checkbox" disabled />
+            <div class="agreeText">
+              <div>
+                <span id="openTerms" class="linkBtn" role="button" tabindex="0">利用規約を確認する</span>
+                を開いて最後までスクロールすると、同意チェックが有効になります。
+              </div>
+              <div class="i18n-sub" style="margin-top:6px;">
+                <div>Open the Terms and scroll to the bottom to enable consent.</div>
+                <div>打开条款并滚动到底部以启用同意。</div>
+                <div>약관을 열고 끝까지 스크롤하면 동의가 활성화됩니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="rowConsent" class="agreeRow" style="margin-top:6px;">
+            <input id="f_consent" type="checkbox" disabled required />
+            <div class="agreeText">
+              本システムが、
+              COMPASSION WORLDの平和な世界を守るために
+              利用されることに同意します
+              <div class="i18n-sub" style="margin-top:6px;">
+                <div>I agree this system is used to keep COMPASSION WORLD peaceful and welcoming.</div>
+                <div>我同意本系统用于守护COMPASSION WORLD的平和与舒适。</div>
+                <div>본 시스템이 COMPASSION WORLD의 평화로운 환경을 지키기 위해 사용됨에 동의합니다.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="btnRegSubmit" class="btnPrimary" type="button" disabled>登録を送信</button>
+            <button id="btnRegCancel" type="button" disabled>閉じる</button>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
 
     <div id="panelActions" class="panel">
       <div class="actions">
-        <button id="btnIn" class="btnIn" disabled>入店</button>
-        <button id="btnOut" class="btnOut" disabled>退店</button>
+        <button id="btnIn" class="btnIn" disabled type="button">入店</button>
+        <button id="btnOut" class="btnOut" disabled type="button">退店</button>
       </div>
       <div class="i18n-sub" style="margin-top:10px;">
         <div>Check in / Check out</div>
@@ -307,8 +321,8 @@
       <div class="termsHint" id="termsHint">最後までスクロールすると同意チェックが有効になります。</div>
 
       <div class="modalActions">
-        <button id="btnCloseTerms">閉じる</button>
-        <button id="btnAcknowledge" class="btnPrimary" disabled>確認しました</button>
+        <button id="btnCloseTerms" type="button">閉じる</button>
+        <button id="btnAcknowledge" class="btnPrimary" type="button" disabled>確認しました</button>
       </div>
     </div>
   </div>
@@ -316,7 +330,7 @@
 
 <script>
   const LIFF_ID = "2008818718-xTQWF4uO";
-  const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyPUuou2-AYoL689TwmcoQtCiSkS2HcDK-XsE9mFumOby2BYVOD1CAV8b4S6fc_-zMS/exec";
+  const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbzY8ZYm-telsuItGezTE1H6rEfo2Z3QcrOb9YMNA_e7coHwoAYzjXFtFU_mWOJE9TmS/exec";
 
   const TERMS_VERSION = "Ver.1.0 / 2026-01-10";
   const TERMS_TEXT =
@@ -343,22 +357,26 @@
 ・安心して過ごせる環境づくりのための確認
 ・法令に基づく対応および手続
 
-第4条 個人情報の管理
+第4条 店内備品等の破損・汚損
+利用者の故意または過失、または通常の使用方法を超える利用により、店内備品、設備、商品、建物その他の物品に破損、汚損、紛失等の損害が生じた場合、当施設は、修理または交換に要する合理的な実費相当額を請求できるものとし、利用者はこれを負担します。
+通常の利用による経年劣化、通常損耗に該当するものは、原則として請求の対象外とします。
+
+第5条 個人情報の管理
 取得した個人情報は、漏えい、紛失、改ざん等を防止するため、適切な安全管理措置を講じて管理します。
 
-第5条 個人情報の第三者提供
+第6条 個人情報の第三者提供
 以下の場合を除き、本人の同意なく第三者に提供することはありません。
 ・法令に基づく場合
 ・警察、裁判所等の公的機関から正当な要請を受けた場合
 ・利用者または第三者の生命、身体、財産の保護のために必要な場合
 
-第6条 入店退店の制限
+第7条 入店退店の制限
 会員登録が完了していない場合、または虚偽の情報が登録されていると判断された場合、本システムによる入店および退店をお断りすることがあります。
 
-第7条 規約の変更
+第8条 規約の変更
 本規約は、必要に応じて予告なく変更されることがあります。変更後の規約は、本システム上に表示された時点で効力を生じます。
 
-第8条 同意の成立
+第9条 同意の成立
 本規約は、利用者が規約内容を確認し、同意の意思表示を行ったうえで会員登録を送信した時点で成立するものとします。`;
 
   const elBadge = document.getElementById("badge");
@@ -384,6 +402,9 @@
   const btnRegCancel = document.getElementById("btnRegCancel");
   const btnIn = document.getElementById("btnIn");
   const btnOut = document.getElementById("btnOut");
+
+  const rowAgreeGate = document.getElementById("rowAgreeGate");
+  const rowConsent = document.getElementById("rowConsent");
 
   const f = {
     sei: document.getElementById("f_sei"),
@@ -432,6 +453,25 @@
     document.querySelector(".card").setAttribute("aria-busy", on ? "true" : "false");
   }
 
+  function clearErrors(){
+    Object.values(f).forEach(el => el.classList.remove("errField"));
+    rowAgreeGate.classList.remove("errRow");
+    rowConsent.classList.remove("errRow");
+  }
+
+  function markMissing(keys){
+    clearErrors();
+    const set = new Set((keys || []).map(String));
+    if (set.has("sei")) f.sei.classList.add("errField");
+    if (set.has("mei")) f.mei.classList.add("errField");
+    if (set.has("sei_kana")) f.seiKana.classList.add("errField");
+    if (set.has("mei_kana")) f.meiKana.classList.add("errField");
+    if (set.has("phone")) f.phone.classList.add("errField");
+    if (set.has("address")) f.address.classList.add("errField");
+    if (set.has("terms_version")) rowAgreeGate.classList.add("errRow");
+    if (set.has("consent")) rowConsent.classList.add("errRow");
+  }
+
   function updateRegisterButtons(){
     const filled =
       f.sei.value.trim() &&
@@ -440,21 +480,17 @@
       f.meiKana.value.trim() &&
       f.phone.value.trim() &&
       f.address.value.trim();
-
     btnRegSubmit.disabled = !(filled && f.consent.checked);
     btnRegCancel.disabled = false;
   }
 
   function openTerms(){
-    if (!termsOpenedOnce) termsOpenedOnce = true;
-
+    termsOpenedOnce = true;
     termsText.textContent = TERMS_TEXT;
     termsBox.scrollTop = 0;
-
     btnAcknowledge.disabled = true;
     modalBadge.textContent = "最後までスクロールしてください";
     termsHint.textContent = "最後までスクロールすると同意チェックが有効になります。";
-
     showOverlay(true);
   }
 
@@ -479,10 +515,10 @@
     f.consent.disabled = false;
     updateRegisterButtons();
     closeTerms();
+    clearErrors();
   });
 
   btnCloseTerms.addEventListener("click", closeTerms);
-
   document.getElementById("openTerms").addEventListener("click", openTerms);
   document.getElementById("openTerms").addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTerms(); }
@@ -491,7 +527,7 @@
   f.consent.addEventListener("change", updateRegisterButtons);
   Object.values(f).forEach(el => {
     if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
-      el.addEventListener("input", updateRegisterButtons);
+      el.addEventListener("input", () => { updateRegisterButtons(); clearErrors(); });
     }
   });
 
@@ -585,7 +621,40 @@
     );
   });
 
+  function clientValidate(){
+    clearErrors();
+
+    const missing = [];
+    if (!f.sei.value.trim()) missing.push("sei");
+    if (!f.mei.value.trim()) missing.push("mei");
+    if (!f.seiKana.value.trim()) missing.push("sei_kana");
+    if (!f.meiKana.value.trim()) missing.push("mei_kana");
+    if (!f.phone.value.trim()) missing.push("phone");
+    if (!f.address.value.trim()) missing.push("address");
+    if (!(termsOpenedOnce && termsScrolledToBottom)) missing.push("terms_version");
+    if (!f.consent.checked) missing.push("consent");
+
+    if (missing.length){
+      markMissing(missing);
+      return { ok:false, missing };
+    }
+    return { ok:true, missing:[] };
+  }
+
   btnRegSubmit.addEventListener("click", async () => {
+    const v = clientValidate();
+    if (!v.ok){
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatus(
+        "未入力の項目があります。すべて入力し、同意にチェックしてください。",
+        "Please complete all required fields and consent.",
+        "请填写所有必填项并勾选同意。",
+        "필수 항목을 모두 입력하고 동의에 체크해 주세요."
+      );
+      return;
+    }
+
     const idToken = liff.getIDToken();
     if (!idToken) { await gate(); return; }
 
@@ -606,9 +675,11 @@
         "&phone=" + encodeURIComponent(f.phone.value.trim()) +
         "&address=" + encodeURIComponent(f.address.value.trim()) +
         "&consent=" + encodeURIComponent("true") +
-        "&terms_version=" + encodeURIComponent(TERMS_VERSION);
+        "&terms_version=" + encodeURIComponent(TERMS_VERSION) +
+        "&ua=" + encodeURIComponent(navigator.userAgent || "");
 
       const res = await jsonp(url);
+
       if (res && res.ok){
         elBadge.textContent = "完了";
         setDot("ok");
@@ -618,10 +689,14 @@
           "登记完成。",
           "등록 완료."
         );
+        clearErrors();
         await gate();
       } else {
         elBadge.textContent = "エラー";
         setDot("error");
+        if (res && res.code === "MISSING_FIELDS" && Array.isArray(res.missing)) {
+          markMissing(res.missing);
+        }
         setStatus(
           (res && res.message) ? res.message : "登録に失敗しました。",
           "Registration failed.",
