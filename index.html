@@ -1,680 +1,213 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>COMPASSION WORLD 入店退店管理システム</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-      :root{
-        --bg:#0b0f1a;
-        --card:#121a2b;
-        --text:#e7ecff;
-        --muted:#aab6da;
-        --good:#1db954;
-        --warn:#f4c542;
-        --bad:#ff5a6a;
-        --shadow: 0 10px 30px rgba(0,0,0,.35);
-        --radius: 18px;
-      }
-      *{box-sizing:border-box}
-      body{
-        margin:0;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", Arial, sans-serif;
-        background:
-          radial-gradient(1200px 700px at 30% -10%, #1a2a6c33, transparent),
-          radial-gradient(900px 500px at 120% 20%, #b21f1f22, transparent),
-          var(--bg);
-        color:var(--text);
-        min-height:100vh;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        padding:16px;
-      }
-      .app{ width:min(640px, 100%); }
-      .card{
-        background: linear-gradient(180deg, #141d33, var(--card));
-        border: 1px solid rgba(255,255,255,.08);
-        box-shadow: var(--shadow);
-        border-radius: var(--radius);
-        padding: 18px;
-      }
-      .header{
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:12px;
-        margin-bottom:12px;
-      }
-      .title{
-        font-size: 16px;
-        margin:0;
-        letter-spacing: .02em;
-        line-height:1.35;
-      }
-      .badge{
-        font-size: 12px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,.14);
-        color: var(--muted);
-        background: rgba(255,255,255,.04);
-        white-space:nowrap;
-      }
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>COMPASSION WORLD 入店退店管理システム</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-      .status{
-        border: 1px solid rgba(255,255,255,.10);
-        background: rgba(255,255,255,.04);
-        border-radius: 14px;
-        padding: 12px;
-        margin: 12px 0 16px;
-      }
-      .statusRow{
-        display:flex;
-        align-items:flex-start;
-        gap:10px;
-      }
-      .dot{
-        width:10px; height:10px; border-radius:999px;
-        margin-top:7px;
-        background: var(--warn);
-        box-shadow: 0 0 0 4px rgba(244,197,66,.18);
-        flex:0 0 auto;
-      }
+  <style>
+    :root{
+      --bg:#0b0f1a; --card:#121a2b; --text:#e7ecff; --muted:#aab6da;
+      --good:#1db954; --warn:#f4c542; --bad:#ff5a6a;
+      --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 30% -10%, #1a2a6c33, transparent),
+        radial-gradient(900px 500px at 120% 20%, #b21f1f22, transparent),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+    .app{width:min(640px,100%)}
+    .card{
+      background:linear-gradient(180deg,#141d33,var(--card));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .header{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .title{font-size:16px;margin:0}
+    .badge{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:var(--muted)}
+    .status{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px;margin:12px 0}
+    .row{display:flex;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;background:var(--warn)}
+    .ja{font-size:15px;font-weight:650}
+    .sub{font-size:12px;color:var(--muted)}
+    .actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    button{
+      border-radius:16px;
+      padding:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+    }
+    button:disabled{opacity:.5}
+    .overlay{
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      background:#141d33;
+      border-radius:18px;
+      padding:16px;
+      width:min(560px,100%);
+    }
+    input,textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:#0003;
+      color:var(--text);
+      padding:10px;
+    }
+    textarea{min-height:80px}
+  </style>
+</head>
 
-      .i18nBlock{ line-height:1.45; }
-      .i18n-ja{ font-size: 15px; color: var(--text); font-weight: 650; }
-      .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
-      .i18n-sub div{ font-size: 12px; color: var(--muted); }
+<body>
+<main class="app">
+  <section class="card">
+    <div class="header">
+      <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
+      <div id="badge" class="badge">起動中</div>
+    </div>
 
-      .actions{
-        display:grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-      button{
-        appearance:none;
-        border: 1px solid rgba(255,255,255,.14);
-        background: rgba(255,255,255,.06);
-        color: var(--text);
-        border-radius: 16px;
-        padding: 14px 12px;
-        cursor: pointer;
-        transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
-        user-select:none;
-      }
-      button:active{ transform: translateY(1px); }
-      button:disabled{ opacity:.55; cursor:not-allowed; }
-
-      .btnLabel{ display:flex; align-items:center; justify-content:center; gap:10px; }
-      .btnText{ text-align:center; }
-      .btnText .ja{ font-size: 16px; font-weight: 750; }
-      .btnText .sub{
-        margin-top:6px;
-        display:grid;
-        gap:4px;
-        font-size: 12px;
-        color: var(--muted);
-        line-height:1.2;
-      }
-
-      .btnIn{
-        border-color: rgba(29,185,84,.35);
-        background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
-      }
-      .btnOut{
-        border-color: rgba(170,182,218,.25);
-        background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06));
-      }
-
-      .footerNote{
-        margin-top: 14px;
-        color: var(--muted);
-        font-size: 12px;
-        line-height: 1.5;
-      }
-
-      .overlay{
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.55);
-        backdrop-filter: blur(6px);
-        display:none;
-        align-items:center;
-        justify-content:center;
-        padding: 18px;
-        z-index: 9999;
-      }
-      .overlay.show{ display:flex; }
-
-      .modal{
-        width:min(560px, 100%);
-        border-radius: 20px;
-        border: 1px solid rgba(255,255,255,.14);
-        background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
-        box-shadow: var(--shadow);
-        padding: 16px;
-      }
-      .modalTop{
-        display:flex;
-        align-items:center;
-        gap:12px;
-        justify-content: space-between;
-      }
-      .modalTitle{ margin:0; font-size: 15px; }
-
-      .pill{
-        font-size: 12px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        border: 1px solid rgba(255,255,255,.14);
-        color: var(--muted);
-        background: rgba(255,255,255,.04);
-        white-space:nowrap;
-      }
-
-      .modalBody{ margin-top:10px; }
-      .modalActions{
-        display:grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-        margin-top: 14px;
-      }
-      .btnPrimary{
-        border-color: rgba(29,185,84,.35);
-        background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
-      }
-      .btnGhost{
-        border-color: rgba(255,255,255,.16);
-        background: rgba(255,255,255,.05);
-      }
-      .srOnly{
-        position:absolute;
-        width:1px;height:1px;
-        padding:0;margin:-1px;
-        overflow:hidden;clip:rect(0,0,0,0);
-        white-space:nowrap;border:0;
-      }
-    </style>
-  </head>
-
-  <body>
-    <main class="app">
-      <section class="card" aria-live="polite" aria-busy="false">
-        <div class="header">
-          <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
-          <div id="badge" class="badge">起動中</div>
-        </div>
-
-        <div class="status" role="status" aria-atomic="true">
-          <div class="statusRow">
-            <div id="dot" class="dot" aria-hidden="true"></div>
-            <div class="i18nBlock">
-              <div id="statusJa" class="i18n-ja">初期化中...</div>
-              <div class="i18n-sub">
-                <div id="statusEn">Initializing...</div>
-                <div id="statusZh">正在初始化...</div>
-                <div id="statusKo">초기화 중...</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button id="btnIn" class="btnIn" disabled>
-            <div class="btnLabel">
-              <div class="btnText">
-                <div class="ja">入店</div>
-                <div class="sub">
-                  <div>Check in</div>
-                  <div>进入</div>
-                  <div>입장</div>
-                </div>
-              </div>
-            </div>
-          </button>
-
-          <button id="btnOut" class="btnOut" disabled>
-            <div class="btnLabel">
-              <div class="btnText">
-                <div class="ja">退店</div>
-                <div class="sub">
-                  <div>Check out</div>
-                  <div>离开</div>
-                  <div>퇴장</div>
-                </div>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        <div class="footerNote">
-          処理中はボタンが押せません。画面の案内に沿って操作してください。
-          <div class="i18n-sub" style="margin-top:8px;">
-            <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
-            <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
-            <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <div id="overlay" class="overlay" aria-hidden="true">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-        <div class="modalTop">
-          <h2 id="modalTitle" class="modalTitle">確認</h2>
-          <div id="modalPill" class="pill">案内</div>
-        </div>
-
-        <div class="modalBody">
-          <div class="i18nBlock">
-            <div id="modalJa" class="i18n-ja">確認中...</div>
-            <div class="i18n-sub">
-              <div id="modalEn">Checking...</div>
-              <div id="modalZh">正在确认...</div>
-              <div id="modalKo">확인 중...</div>
-            </div>
-          </div>
-
-          <div id="modalActions" class="modalActions">
-            <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
-            <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
-          </div>
-
-          <div class="srOnly" id="srLive" aria-live="assertive"></div>
+    <div class="status">
+      <div class="row">
+        <div id="dot" class="dot"></div>
+        <div>
+          <div id="statusJa" class="ja">初期化中...</div>
+          <div id="statusEn" class="sub">Initializing...</div>
+          <div id="statusZh" class="sub">正在初始化...</div>
+          <div id="statusKo" class="sub">초기화 중...</div>
         </div>
       </div>
     </div>
 
-    <script>
-      const LIFF_ID = "2008818718-xTQWF4uO";
+    <div class="actions">
+      <button id="btnIn" disabled>入店</button>
+      <button id="btnOut" disabled>退店</button>
+    </div>
+  </section>
+</main>
 
-      const GAS_EXEC_URL =
-        "https://script.google.com/macros/s/AKfycbwHGto3ZK9UUETjdU3HJsqtW8pVhACN3H24DK_eBrRB8ubtDBHWANOFPpL1RdBBLdKQ/exec";
+<div id="overlay" class="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">会員情報登録</h3>
+    <div id="modalBody"></div>
+    <div style="margin-top:12px;display:grid;gap:8px">
+      <button id="modalOk">送信</button>
+      <button id="modalCancel">閉じる</button>
+    </div>
+  </div>
+</div>
 
-      const OA_ID_WITH_AT = "@420taqgx";
-      const OA_ADD_FRIEND_URL = "https://line.me/R/ti/p/" + encodeURIComponent(OA_ID_WITH_AT);
+<script>
+const LIFF_ID = "2008818718-xTQWF4uO";
 
-      const I18N = {
-        ready: [
-          "準備ができました。入店または退店を押してください。",
-          "Ready. Tap Check in or Check out.",
-          "准备就绪。请选择进入或离开。",
-          "준비 완료. 입장 또는 퇴장을 눌러 주세요."
-        ],
-        initFail: [
-          "初期化に失敗しました。通信環境と設定を確認してください。",
-          "Initialization failed. Check network and settings.",
-          "初始化失败。请检查网络和设置。",
-          "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
-        ],
-        tokenMissing: [
-          "認証情報を取得できませんでした。LINEを開き直してお試しください。",
-          "Could not get authentication info. Please reopen LINE and try again.",
-          "无法获取认证信息。请重新打开LINE后重试。",
-          "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
-        ],
-        netErr: [
-          "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
-          "Network error or timeout. Check your connection.",
-          "通信错误或超时。请检查网络。",
-          "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
-        ],
-        confirmIn: {
-          title: "確認",
-          pill: "入店",
-          body: [
-            "入店を記録します。よろしいですか。",
-            "You are about to check in. Continue?",
-            "将记录进入。继续吗？",
-            "입장을 기록합니다. 진행할까요?"
-          ],
-          primary: "入店する",
-          secondary: "やめる"
-        },
-        confirmOut: {
-          title: "確認",
-          pill: "退店",
-          body: [
-            "退店を記録します。よろしいですか。",
-            "You are about to check out. Continue?",
-            "将记录离开。继续吗？",
-            "퇴장을 기록합니다. 진행할까요?"
-          ],
-          primary: "退店する",
-          secondary: "やめる"
-        },
-        friendGate: {
-          title: "友だち追加",
-          pill: "初回のみ",
-          body: [
-            "ご利用には公式LINEの友だち追加が必要です。下のボタンから追加してください。",
-            "To continue, please add our official LINE account using the button below.",
-            "继续使用前，请先通过下方按钮添加我们的官方LINE账号。",
-            "계속하려면 아래 버튼으로 공식 LINE 계정을 추가해 주세요."
-          ],
-          primary: "友だち追加を開く",
-          secondary: "追加できたら再チェック"
-        },
-        friendChecking: {
-          title: "確認中",
-          pill: "処理中",
-          body: [
-            "友だち追加状況を確認しています。少しお待ちください。",
-            "Checking friendship status. Please wait.",
-            "正在确认好友状态…请稍候。",
-            "친구 상태를 확인 중입니다. 잠시만 기다려 주세요."
-          ],
-          primary: "再チェック",
-          secondary: "閉じる"
-        }
-      };
+/* ★ ここが今回の反映ポイント ★ */
+const GAS_EXEC_URL =
+  "https://script.google.com/macros/s/AKfycbx_XXjlffpUDVhFoy3FanwSPDT9y4m0Uc1dJLn8NwotXmjzjLuez5hCbQKGMxu0HJgo/exec";
 
-      const elBadge = document.getElementById("badge");
-      const elDot = document.getElementById("dot");
-      const elStatusJa = document.getElementById("statusJa");
-      const elStatusEn = document.getElementById("statusEn");
-      const elStatusZh = document.getElementById("statusZh");
-      const elStatusKo = document.getElementById("statusKo");
-      const btnIn = document.getElementById("btnIn");
-      const btnOut = document.getElementById("btnOut");
-      const card = document.querySelector(".card");
+const badge = document.getElementById("badge");
+const dot = document.getElementById("dot");
+const btnIn = document.getElementById("btnIn");
+const btnOut = document.getElementById("btnOut");
+const overlay = document.getElementById("overlay");
+const modalBody = document.getElementById("modalBody");
 
-      const overlay = document.getElementById("overlay");
-      const modalTitle = document.getElementById("modalTitle");
-      const modalPill = document.getElementById("modalPill");
-      const modalJa = document.getElementById("modalJa");
-      const modalEn = document.getElementById("modalEn");
-      const modalZh = document.getElementById("modalZh");
-      const modalKo = document.getElementById("modalKo");
-      const btnModalPrimary = document.getElementById("btnModalPrimary");
-      const btnModalSecondary = document.getElementById("btnModalSecondary");
-      const srLive = document.getElementById("srLive");
+function setStatus(ja,en,zh,ko){
+  statusJa.textContent=ja;
+  statusEn.textContent=en;
+  statusZh.textContent=zh;
+  statusKo.textContent=ko;
+}
 
-      let friendPollTimer = null;
-      let friendPollCount = 0;
+function jsonp(url){
+  return new Promise((res,rej)=>{
+    const cb="cb_"+Math.random().toString(36).slice(2);
+    window[cb]=(d)=>{delete window[cb];res(d)};
+    const s=document.createElement("script");
+    s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
+    s.onerror=rej;
+    document.body.appendChild(s);
+  });
+}
 
-      function setDot(state){
-        if (state === "ok") {
-          elDot.style.background = "var(--good)";
-          elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)";
-        } else if (state === "busy") {
-          elDot.style.background = "var(--warn)";
-          elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
-        } else if (state === "error") {
-          elDot.style.background = "var(--bad)";
-          elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)";
-        } else {
-          elDot.style.background = "var(--warn)";
-          elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
-        }
-      }
+async function checkProfile(){
+  const t=liff.getIDToken();
+  return jsonp(GAS_EXEC_URL+"?action=profile_status&id_token="+encodeURIComponent(t));
+}
 
-      function setStatusLines(lines){
-        elStatusJa.textContent = lines[0] || "";
-        elStatusEn.textContent = lines[1] || "";
-        elStatusZh.textContent = lines[2] || "";
-        elStatusKo.textContent = lines[3] || "";
-        srLive.textContent = lines[0] || "";
-      }
+function showProfileForm(){
+  overlay.classList.add("show");
+  modalBody.innerHTML=`
+    <input id="fName" placeholder="氏名（フルネーム）">
+    <input id="fPhone" placeholder="電話番号">
+    <textarea id="fAddr" placeholder="住所"></textarea>
+    <label><input id="fOk" type="checkbox"> 同意します</label>
+  `;
+}
 
-      function enableButtons(ready){
-        btnIn.disabled = !ready;
-        btnOut.disabled = !ready;
-      }
+async function submitProfile(){
+  const t=liff.getIDToken();
+  const url=GAS_EXEC_URL+
+    "?action=profile_set"+
+    "&id_token="+encodeURIComponent(t)+
+    "&full_name="+encodeURIComponent(fName.value)+
+    "&phone="+encodeURIComponent(fPhone.value)+
+    "&address="+encodeURIComponent(fAddr.value)+
+    "&consent="+encodeURIComponent(fOk.checked);
+  const r=await jsonp(url);
+  if(r.ok){
+    overlay.classList.remove("show");
+    ready();
+  }else alert(r.message);
+}
 
-      function showOverlay(show){
-        overlay.classList.toggle("show", !!show);
-        overlay.setAttribute("aria-hidden", show ? "false" : "true");
-      }
+async function ready(){
+  badge.textContent="準備OK";
+  dot.style.background="var(--good)";
+  setStatus(
+    "準備ができました。入店または退店を押してください。",
+    "Ready",
+    "准备就绪",
+    "준비 완료"
+  );
+  btnIn.disabled=false;
+  btnOut.disabled=false;
+}
 
-      function setBusy(on){
-        card.setAttribute("aria-busy", on ? "true" : "false");
-        enableButtons(!on);
-      }
+async function init(){
+  await liff.init({liffId:LIFF_ID,withLoginOnExternalBrowser:true});
+  const p=await checkProfile();
+  if(p.ok && p.has_profile) ready();
+  else showProfileForm();
+}
 
-      function setModal(cfg){
-        modalTitle.textContent = cfg.title || "";
-        modalPill.textContent = cfg.pill || "";
-        modalJa.textContent = (cfg.body && cfg.body[0]) || "";
-        modalEn.textContent = (cfg.body && cfg.body[1]) || "";
-        modalZh.textContent = (cfg.body && cfg.body[2]) || "";
-        modalKo.textContent = (cfg.body && cfg.body[3]) || "";
-        srLive.textContent = (cfg.body && cfg.body[0]) || "";
+modalOk.onclick=submitProfile;
+modalCancel.onclick=()=>overlay.classList.remove("show");
 
-        btnModalPrimary.textContent = cfg.primary || "";
-        btnModalSecondary.textContent = cfg.secondary || "";
+btnIn.onclick=()=>alert("入店処理");
+btnOut.onclick=()=>alert("退店処理");
 
-        btnModalPrimary.disabled = false;
-        btnModalSecondary.disabled = false;
-      }
-
-      function clearFriendPoll(){
-        if (friendPollTimer) {
-          clearInterval(friendPollTimer);
-          friendPollTimer = null;
-        }
-        friendPollCount = 0;
-      }
-
-      async function checkFriendshipOnce(){
-        try{
-          const r = await liff.getFriendship();
-          return !!(r && r.friendFlag);
-        } catch(e){
-          return null;
-        }
-      }
-
-      async function ensureFriendshipOrGate(){
-        const friend = await checkFriendshipOnce();
-
-        if (friend === true) {
-          clearFriendPoll();
-          elBadge.textContent = "準備OK";
-          setDot("ok");
-          setStatusLines(I18N.ready);
-          showOverlay(false);
-          enableButtons(true);
-          return;
-        }
-
-        showOverlay(true);
-        enableButtons(false);
-        setBusy(false);
-
-        setModal(I18N.friendGate);
-
-        btnModalPrimary.onclick = async () => {
-          try{
-            await liff.openWindow({ url: OA_ADD_FRIEND_URL, external: true });
-          } catch(e){
-            window.open(OA_ADD_FRIEND_URL, "_blank");
-          }
-          startFriendPoll();
-        };
-
-        btnModalSecondary.onclick = async () => {
-          await manualRecheckFriendship();
-        };
-
-        startFriendPoll();
-      }
-
-      function startFriendPoll(){
-        clearFriendPoll();
-
-        friendPollTimer = setInterval(async () => {
-          friendPollCount++;
-          if (friendPollCount > 40) {
-            clearFriendPoll();
-            return;
-          }
-          const friend = await checkFriendshipOnce();
-          if (friend === true) {
-            clearFriendPoll();
-            elBadge.textContent = "準備OK";
-            setDot("ok");
-            setStatusLines(I18N.ready);
-            showOverlay(false);
-            enableButtons(true);
-          }
-        }, 1500);
-      }
-
-      async function manualRecheckFriendship(){
-        setModal(I18N.friendChecking);
-        const friend = await checkFriendshipOnce();
-        if (friend === true) {
-          elBadge.textContent = "準備OK";
-          setDot("ok");
-          setStatusLines(I18N.ready);
-          showOverlay(false);
-          enableButtons(true);
-          clearFriendPoll();
-          return;
-        }
-        setModal(I18N.friendGate);
-      }
-
-      function jsonp(url) {
-        return new Promise((resolve, reject) => {
-          const cb = "cb_" + Math.random().toString(36).slice(2);
-          window[cb] = (data) => { cleanup(); resolve(data); };
-
-          const script = document.createElement("script");
-          const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 15000);
-
-          function cleanup() {
-            clearTimeout(timer);
-            if (script.parentNode) script.parentNode.removeChild(script);
-            delete window[cb];
-          }
-
-          const sep = url.includes("?") ? "&" : "?";
-          script.src = url + sep + "callback=" + encodeURIComponent(cb);
-          script.onerror = () => { cleanup(); reject(new Error("load error")); };
-
-          document.body.appendChild(script);
-        });
-      }
-
-      async function callGAS(action){
-        setBusy(true);
-        elBadge.textContent = "処理中";
-        setDot("busy");
-        setStatusLines([
-          "通信中です。しばらくお待ちください。",
-          "Communicating... Please wait.",
-          "正在通信…请稍候。",
-          "통신 중입니다. 잠시만 기다려 주세요."
-        ]);
-
-        const idToken = liff.getIDToken();
-        if (!idToken) {
-          setBusy(false);
-          elBadge.textContent = "エラー";
-          setDot("error");
-          setStatusLines(I18N.tokenMissing);
-          return;
-        }
-
-        try{
-          const url =
-            GAS_EXEC_URL +
-            "?action=" + encodeURIComponent(action) +
-            "&id_token=" + encodeURIComponent(idToken) +
-            "&t=" + Date.now();
-
-          const res = await jsonp(url);
-
-          if (res && res.ok){
-            elBadge.textContent = "完了";
-            setDot("ok");
-
-            const msgJa = res.message || "完了しました。";
-            setStatusLines([
-              msgJa,
-              "Please operate the door now. Watch your step.",
-              "请打开门并通过。请注意脚下的台阶。",
-              "문을 열고 지나가 주세요. 단차에 주의하세요."
-            ]);
-          } else {
-            elBadge.textContent = "エラー";
-            setDot("error");
-            const msg = (res && res.message) ? res.message : "エラーが発生しました。";
-            setStatusLines([
-              msg + " もう一度お試しください。",
-              "An error occurred. Please try again.",
-              "发生错误。请重试。",
-              "오류가 발생했습니다. 다시 시도해 주세요."
-            ]);
-          }
-        } catch(e){
-          elBadge.textContent = "エラー";
-          setDot("error");
-          setStatusLines(I18N.netErr);
-        } finally{
-          setBusy(false);
-        }
-      }
-
-      function openConfirm(action){
-        showOverlay(true);
-        enableButtons(false);
-
-        const cfg = action === "in" ? I18N.confirmIn : I18N.confirmOut;
-        setModal(cfg);
-
-        btnModalPrimary.onclick = async () => {
-          showOverlay(false);
-          enableButtons(false);
-          await callGAS(action);
-          enableButtons(true);
-        };
-
-        btnModalSecondary.onclick = () => {
-          showOverlay(false);
-          enableButtons(true);
-        };
-      }
-
-      async function init(){
-        elBadge.textContent = "起動中";
-        setDot("boot");
-        setStatusLines(["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."]);
-        enableButtons(false);
-
-        try{
-          await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
-          await ensureFriendshipOrGate();
-        }catch(e){
-          elBadge.textContent = "エラー";
-          setDot("error");
-          setStatusLines(I18N.initFail);
-          enableButtons(false);
-        }
-      }
-
-      btnIn.addEventListener("click", () => openConfirm("in"));
-      btnOut.addEventListener("click", () => openConfirm("out"));
-
-      document.addEventListener("visibilitychange", async () => {
-        if (document.visibilityState === "visible") {
-          const friend = await checkFriendshipOnce();
-          if (friend === true) {
-            clearFriendPoll();
-            elBadge.textContent = "準備OK";
-            setDot("ok");
-            setStatusLines(I18N.ready);
-            showOverlay(false);
-            enableButtons(true);
-          }
-        }
-      });
-
-      init();
-    </script>
-  </body>
+init();
+</script>
+</body>
 </html>
