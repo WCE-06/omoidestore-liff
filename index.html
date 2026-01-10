@@ -350,6 +350,16 @@
   const LIFF_ID = "2008818718-xTQWF4uO";
   const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbzY8ZYm-telsuItGezTE1H6rEfo2Z3QcrOb9YMNA_e7coHwoAYzjXFtFU_mWOJE9TmS/exec";
 
+  const STORE_LAT = 35.9025210;
+  const STORE_LNG = 138.4435135;
+  const ALLOW_RADIUS_M = 50;
+
+  const GEO_OPTIONS = {
+    enableHighAccuracy: true,
+    timeout: 12000,
+    maximumAge: 0
+  };
+
   const TERMS_VERSION = "Ver.1.0 / 2026-01-10";
   const TERMS_TEXT =
 `COMPASSION WORLD 入店退店管理システム
@@ -493,6 +503,7 @@
     if (set.has("address")) f.address.classList.add("errField");
     if (set.has("terms_version")) rowAgreeGate.classList.add("errRow");
     if (set.has("consent")) rowConsent.classList.add("errRow");
+    if (set.has("geofence")) rowConsent.classList.add("errRow");
   }
 
   function updateRegisterButtons(){
@@ -574,6 +585,47 @@
 
       document.body.appendChild(script);
     });
+  }
+
+  function toRad(d){ return d * Math.PI / 180; }
+
+  function distanceMeters(lat1, lon1, lat2, lon2){
+    const R = 6371e3;
+    const φ1 = toRad(lat1), φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  function getCurrentPositionAsync(){
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("geolocation_not_supported"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(resolve, reject, GEO_OPTIONS);
+    });
+  }
+
+  async function ensureInsideGeofence(){
+    try{
+      const pos = await getCurrentPositionAsync();
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const acc = pos.coords.accuracy;
+
+      const d = distanceMeters(lat, lng, STORE_LAT, STORE_LNG);
+
+      if (Number.isFinite(d) && d <= ALLOW_RADIUS_M) return { ok:true, distance_m: Math.round(d), accuracy_m: Math.round(acc) };
+
+      return { ok:false, code:"OUT_OF_RANGE", distance_m: Math.round(d), accuracy_m: Math.round(acc) };
+    } catch(e){
+      return { ok:false, code:"GEO_FAIL" };
+    }
   }
 
   async function profileStatus(){
@@ -680,10 +732,44 @@
       return;
     }
 
-    const idToken = liff.getIDToken();
-    if (!idToken) { await gate(); return; }
-
     setBusy(true);
+    elBadge.textContent = "位置確認中";
+    setDot("busy");
+    setStatus(
+      "現地確認のため、位置情報を確認しています。",
+      "Checking location...",
+      "正在确认位置...",
+      "위치를 확인 중입니다..."
+    );
+
+    const geo = await ensureInsideGeofence();
+    if (!geo.ok){
+      setBusy(false);
+      elBadge.textContent = "エラー";
+      setDot("error");
+
+      if (geo.code === "OUT_OF_RANGE"){
+        markMissing(["geofence"]);
+        setStatus(
+          "現地からの操作のみ可能です。入口付近で再度お試しください。",
+          "This action is only available near the store. Please try again on-site.",
+          "仅限在店铺附近操作。请到店附近重试。",
+          "현장(매장 근처)에서만 가능합니다. 매장 근처에서 다시 시도해 주세요."
+        );
+      } else {
+        setStatus(
+          "位置情報を取得できませんでした。位置情報の許可をオンにして再度お試しください。",
+          "Could not get location. Please allow location permission and try again.",
+          "无法获取位置。请允许位置权限后重试。",
+          "위치 정보를 가져올 수 없습니다. 위치 권한을 허용한 뒤 다시 시도해 주세요."
+        );
+      }
+      return;
+    }
+
+    const idToken = liff.getIDToken();
+    if (!idToken) { setBusy(false); await gate(); return; }
+
     elBadge.textContent = "送信中";
     setDot("busy");
     setStatus("送信中です。しばらくお待ちください。","Sending...","发送中...","전송 중...");
@@ -701,6 +787,10 @@
         "&address=" + encodeURIComponent(f.address.value.trim()) +
         "&consent=" + encodeURIComponent("true") +
         "&terms_version=" + encodeURIComponent(TERMS_VERSION) +
+        "&geo_lat=" + encodeURIComponent(String(STORE_LAT)) +
+        "&geo_lng=" + encodeURIComponent(String(STORE_LNG)) +
+        "&geo_radius_m=" + encodeURIComponent(String(ALLOW_RADIUS_M)) +
+        "&device_lat=" + encodeURIComponent(String(geo.distance_m)) +
         "&ua=" + encodeURIComponent(navigator.userAgent || "");
 
       const res = await jsonp(url);
@@ -748,12 +838,52 @@
     if (!idToken) { await gate(); return; }
 
     setBusy(true);
+    elBadge.textContent = "位置確認中";
+    setDot("busy");
+    setStatus(
+      "現地確認のため、位置情報を確認しています。",
+      "Checking location...",
+      "正在确认位置...",
+      "위치를 확인 중입니다..."
+    );
+
+    const geo = await ensureInsideGeofence();
+    if (!geo.ok){
+      setBusy(false);
+      elBadge.textContent = "エラー";
+      setDot("error");
+
+      if (geo.code === "OUT_OF_RANGE"){
+        setStatus(
+          "現地からの操作のみ可能です。入口付近で再度お試しください。",
+          "This action is only available near the store. Please try again on-site.",
+          "仅限在店铺附近操作。请到店附近重试。",
+          "현장(매장 근처)에서만 가능합니다. 매장 근처에서 다시 시도해 주세요."
+        );
+      } else {
+        setStatus(
+          "位置情報を取得できませんでした。位置情報の許可をオンにして再度お試しください。",
+          "Could not get location. Please allow location permission and try again.",
+          "无法获取位置。请允许位置权限后重试。",
+          "위치 정보를 가져올 수 없습니다. 위치 권한을 허용한 뒤 다시 시도해 주세요."
+        );
+      }
+      return;
+    }
+
     elBadge.textContent = "処理中";
     setDot("busy");
     setStatus("通信中です。しばらくお待ちください。","Communicating...","正在通信...","통신 중...");
 
     try{
-      const url = GAS_EXEC_URL + "?action=" + encodeURIComponent(action) + "&id_token=" + encodeURIComponent(idToken);
+      const url =
+        GAS_EXEC_URL +
+        "?action=" + encodeURIComponent(action) +
+        "&id_token=" + encodeURIComponent(idToken) +
+        "&store_lat=" + encodeURIComponent(String(STORE_LAT)) +
+        "&store_lng=" + encodeURIComponent(String(STORE_LNG)) +
+        "&radius_m=" + encodeURIComponent(String(ALLOW_RADIUS_M));
+
       const res = await jsonp(url);
       if (res && res.ok){
         elBadge.textContent = "完了";
@@ -797,6 +927,9 @@
     elBadge.textContent = "起動中";
     setDot("busy");
     setStatus("初期化中...","Initializing...","正在初始化...","초기화 중...");
+
+    btnRegCancel.disabled = false;
+
     try{
       await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
       await gate();
