@@ -4,11 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>COMPASSION WORLD 入店退店管理システム</title>
+
   <style>
     :root{
       --bg:#0b0f1a; --card:#121a2b; --text:#e7ecff; --muted:#aab6da;
       --good:#1db954; --warn:#f4c542; --bad:#ff5a6a;
       --shadow: 0 10px 30px rgba(0,0,0,.35); --radius: 18px;
+      --ring: rgba(255,90,106,.55);
     }
     *{box-sizing:border-box}
     body{
@@ -23,7 +25,7 @@
       display:flex; align-items:center; justify-content:center;
       padding:16px;
     }
-    .app{ width:min(720px, 100%); }
+    .app{ width:min(640px, 100%); }
     .card{
       background: linear-gradient(180deg, #141d33, var(--card));
       border: 1px solid rgba(255,255,255,.08);
@@ -40,7 +42,7 @@
     .dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn); box-shadow:0 0 0 4px rgba(244,197,66,.18); flex:0 0 auto;}
 
     .i18nBlock{ line-height:1.45; }
-    .i18n-ja{ font-size:15px; color:var(--text); font-weight:650; white-space:pre-line; }
+    .i18n-ja{ font-size:15px; color:var(--text); font-weight:650; }
     .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
     .i18n-sub div{ font-size:12px; color:var(--muted); }
 
@@ -79,12 +81,14 @@
     .overlay.show{ display:flex; }
 
     .modal{
-      width:min(640px, 100%);
+      width:min(560px, 100%);
       border-radius:20px;
       border:1px solid rgba(255,255,255,.14);
       background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
       box-shadow: var(--shadow);
       padding:16px;
+      max-height: 88vh;
+      overflow:auto;
     }
     .modalTop{ display:flex; align-items:center; gap:12px; justify-content:space-between; }
     .modalTitle{ margin:0; font-size:15px; }
@@ -101,7 +105,7 @@
       gap:10px;
     }
     .field{ display:grid; gap:6px; }
-    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     label{ font-size:12px; color:var(--muted); }
     input, textarea{
       width:100%;
@@ -112,11 +116,12 @@
       padding:12px 12px;
       font-size:14px;
       outline:none;
+      transition: box-shadow .15s ease, border-color .15s ease;
     }
     textarea{ min-height: 90px; resize: vertical; }
-    .invalid{
-      border-color: rgba(255,90,106,.85) !important;
-      box-shadow: 0 0 0 3px rgba(255,90,106,.18) !important;
+    .invalid input, .invalid textarea{
+      border-color: rgba(255,90,106,.75);
+      box-shadow: 0 0 0 4px var(--ring);
     }
     .checkRow{
       display:flex;
@@ -125,34 +130,25 @@
       font-size:12px;
       color: var(--muted);
       line-height:1.5;
-      padding:10px;
-      border-radius:14px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
+      background: rgba(255,255,255,.04);
+      border-radius: 14px;
+      padding: 10px;
     }
     .checkRow.invalid{
-      border-color: rgba(255,90,106,.85) !important;
-      box-shadow: 0 0 0 3px rgba(255,90,106,.18) !important;
+      border-color: rgba(255,90,106,.75);
+      box-shadow: 0 0 0 4px var(--ring);
     }
     .checkRow input{ width:18px; height:18px; margin-top:2px; }
-
-    .termsBox{
-      margin-top:10px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.16);
-      padding:12px;
-      color: var(--muted);
-      font-size:12px;
-      line-height:1.6;
-      max-height: 240px;
-      overflow:auto;
-      white-space: pre-line;
+    .srOnly{
+      position:absolute; width:1px; height:1px;
+      padding:0; margin:-1px; overflow:hidden;
+      clip:rect(0,0,0,0); white-space:nowrap; border:0;
     }
-    .linkLike{
-      color: var(--text);
-      text-decoration: underline;
-      cursor: pointer;
+    .linkBtn{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:100%;
+      text-decoration:none;
     }
   </style>
 </head>
@@ -204,8 +200,8 @@
       </div>
 
       <div class="footerNote">
-        処理中はボタンが押せません。画面の案内に沿って操作してください。
-        <div class="i18n-sub" style="margin-top:8px;">
+        <div class="i18n-sub" style="margin-top:0;">
+          <div id="footerJa">処理中はボタンが押せません。画面の案内に沿って操作してください。</div>
           <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
           <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
           <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
@@ -237,75 +233,49 @@
           <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
           <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
         </div>
+
+        <div class="srOnly" id="srLive" aria-live="assertive"></div>
       </div>
     </div>
   </div>
 
 <script>
-  const GAS_EXEC_URL =
-    "https://script.google.com/macros/s/AKfycbx7zcqhZho4NaMTlMhwP7-C0HRVKAhs6edk6GtEIgoDfqFfYPJKzymIb4XIFDgV59L0/exec";
+  const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbzLQel89zRqO146wcLh2VWpPy9QOHKIl2rmffCgBfbutfru7CLBfQB3k-T44PnzgvY/exec";
+  const APP_URL = "https://wce-06.github.io/omoidestore-liff/";
+
+  const STORE_LAT = 35.9025210;
+  const STORE_LNG = 138.4435135;
+  const GEOFENCE_RADIUS_M = 50;
 
   const I18N = {
-    boot: ["初期化中...","Initializing...","正在初始化...","초기화 중..."],
-    needLogin: [
-      "ご利用にはLINEログインが必要です。ログインしてください。",
-      "LINE Login is required. Please log in.",
-      "需要LINE登录。请先登录。",
-      "LINE 로그인이 필요합니다. 로그인해 주세요."
-    ],
-    ready: [
-      "準備ができました。入店または退店を押してください。",
-      "Ready. Tap Check in or Check out.",
-      "准备就绪。请选择进入或离开。",
-      "준비 완료. 입장 또는 퇴장을 눌러 주세요."
-    ],
-    initFail: [
-      "初期化に失敗しました。通信環境と設定を確認してください。",
-      "Initialization failed. Check network and settings.",
-      "初始化失败。请检查网络和设置。",
-      "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
-    ],
-    netErr: [
-      "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
-      "Network error or timeout. Check your connection.",
-      "通信错误或超时。请检查网络。",
-      "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
-    ],
-    geoDenied: [
-      "位置情報を取得できませんでした。ブラウザの位置情報を許可してお試しください。",
-      "Could not get location. Please allow location permission and try again.",
-      "无法获取位置。请允许定位权限后重试。",
-      "위치를 가져올 수 없습니다. 위치 권한을 허용하고 다시 시도해 주세요."
-    ],
-    confirmIn: {
-      title: "確認", pill: "入店",
-      body: ["入店を記録します。よろしいですか。","You are about to check in. Continue?","将记录进入。继续吗？","입장을 기록합니다. 진행할까요?"],
-      primary: "入店する", secondary: "やめる"
+    init: ["初期化中...","Initializing...","正在初始化...","초기화 중..."],
+    ready: ["準備ができました。入店または退店を押してください。","Ready. Tap Check in or Check out.","准备就绪。请选择进入或离开。","준비 완료. 입장 또는 퇴장을 눌러 주세요."],
+    needLogin: ["ログインが必要です。","Login is required.","需要登录。","로그인이 필요합니다."],
+    loginCta: ["LINEでログイン","Log in with LINE","使用LINE登录","LINE로 로그인"],
+    loginNote: ["ログイン後、この画面に戻ります。","You'll return to this page after login.","登录后将返回此页面。","로그인 후 이 페이지로 돌아옵니다."],
+    initFail: ["初期化に失敗しました。通信環境と設定を確認してください。","Initialization failed. Check network and settings.","初始化失败。请检查网络和设置。","초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."],
+    netErr: ["通信エラーまたはタイムアウトです。電波状況を確認してお試しください。","Network error or timeout. Check your connection.","通信错误或超时。请检查网络。","통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."],
+    geoNeedHttps: ["位置情報の取得にはHTTPSが必要です。","Geolocation requires HTTPS.","定位需要HTTPS。","위치정보는 HTTPS가 필요합니다."],
+    geoDenied: ["位置情報の利用が許可されていません。許可して再度お試しください。","Location permission denied. Please allow and retry.","未允许定位权限。请允许后重试。","위치 권한이 거부되었습니다. 허용 후 다시 시도해 주세요."],
+    geoOut: ["店舗付近でのみ操作できます。","You can operate only near the store.","仅限在店铺附近操作。","매장 근처에서만 조작할 수 있습니다."],
+    confirmIn: { title:"確認", pill:"入店",
+      body:["入店を記録します。よろしいですか。","You are about to check in. Continue?","将记录进入。继续吗？","입장을 기록합니다. 진행할까요?"],
+      primary:"入店する", secondary:"やめる"
     },
-    confirmOut: {
-      title: "確認", pill: "退店",
-      body: ["退店を記録します。よろしいですか。","You are about to check out. Continue?","将记录离开。继续吗？","퇴장을 기록합니다. 진행할까요?"],
-      primary: "退店する", secondary: "やめる"
+    confirmOut: { title:"確認", pill:"退店",
+      body:["退店を記録します。よろしいですか。","You are about to check out. Continue?","将记录离开。继续吗？","퇴장을 기록합니다. 진행할까요?"],
+      primary:"退店する", secondary:"やめる"
+    },
+    profileGate: {
+      title:"会員情報の登録", pill:"初回のみ",
+      lead:[
+        "COMPASSION WORLDが平和で心地よい世界であり続けるために",
+        "To keep COMPASSION WORLD peaceful and welcoming, we ask for a one-time registration.",
+        "为了让COMPASSION WORLD保持和平舒适，我们需要一次性注册。",
+        "COMPASSION WORLD가 평화롭고 편안한 세계로 유지되기 위해 1회 등록이 필요합니다."
+      ]
     }
   };
-
-  const TERMS_TEXT = `
-COMPASSION WORLDが
-平和で心地よい世界であり続けるために
-
-COMPASSION WORLDは、
-訪れるすべての方が安心して過ごせる
-平和であたたかな世界であることを大切にしています。
-その世界を守り続けるため、
-初めてご利用いただく際のみ、
-会員登録へのご協力をお願いしています。
-ご登録後は、入店・退店の操作のみで
-スムーズにご利用いただけます。
-
-利用規約（抜粋）
-・施設内の備品、設備、商品、その他の物品を破損・汚損した場合、故意過失を問わず、原状回復または全額弁償に同意します。
-・未精算や緊急時、防犯上の確認が必要な場合に備え、登録情報を用いて連絡を受けることに同意します。
-  `.trim();
 
   const elBadge = document.getElementById("badge");
   const elDot = document.getElementById("dot");
@@ -315,6 +285,7 @@ COMPASSION WORLDは、
   const elStatusKo = document.getElementById("statusKo");
   const btnIn = document.getElementById("btnIn");
   const btnOut = document.getElementById("btnOut");
+  const actions = document.getElementById("actions");
   const card = document.querySelector(".card");
 
   const overlay = document.getElementById("overlay");
@@ -327,37 +298,32 @@ COMPASSION WORLDは、
   const modalForm = document.getElementById("modalForm");
   const btnModalPrimary = document.getElementById("btnModalPrimary");
   const btnModalSecondary = document.getElementById("btnModalSecondary");
+  const srLive = document.getElementById("srLive");
 
   function setDot(state){
     if (state === "ok") { elDot.style.background = "var(--good)"; elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)"; return; }
     if (state === "busy") { elDot.style.background = "var(--warn)"; elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)"; return; }
     if (state === "error") { elDot.style.background = "var(--bad)"; elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)"; return; }
-    elDot.style.background = "var(--warn)";
-    elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
   }
-
   function setStatusLines(lines){
     elStatusJa.textContent = lines[0] || "";
     elStatusEn.textContent = lines[1] || "";
     elStatusZh.textContent = lines[2] || "";
     elStatusKo.textContent = lines[3] || "";
+    srLive.textContent = lines[0] || "";
   }
-
   function enableButtons(ready){
     btnIn.disabled = !ready;
     btnOut.disabled = !ready;
   }
-
   function showOverlay(show){
     overlay.classList.toggle("show", !!show);
     overlay.setAttribute("aria-hidden", show ? "false" : "true");
   }
-
   function setBusy(on){
     card.setAttribute("aria-busy", on ? "true" : "false");
     enableButtons(!on);
   }
-
   function setModal(cfg){
     modalTitle.textContent = cfg.title || "";
     modalPill.textContent = cfg.pill || "";
@@ -365,6 +331,7 @@ COMPASSION WORLDは、
     modalEn.textContent = (cfg.body && cfg.body[1]) || "";
     modalZh.textContent = (cfg.body && cfg.body[2]) || "";
     modalKo.textContent = (cfg.body && cfg.body[3]) || "";
+    srLive.textContent = (cfg.body && cfg.body[0]) || "";
     modalForm.style.display = "none";
     modalForm.innerHTML = "";
     btnModalPrimary.textContent = cfg.primary || "";
@@ -394,72 +361,136 @@ COMPASSION WORLDは、
     });
   }
 
-  function getReturnUrl_(){
-    const u = new URL(location.href);
-    u.hash = "";
+  function getSessionFromHash(){
+    const m = (location.hash || "").match(/(?:^|[&#])session=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+  function saveSession(s){
+    if (!s) return;
+    localStorage.setItem("cw_session", s);
+  }
+  function loadSession(){
+    return localStorage.getItem("cw_session") || "";
+  }
+  function clearSession(){
+    localStorage.removeItem("cw_session");
+  }
+
+  function loginStartUrl(){
+    const u = new URL(GAS_EXEC_URL);
+    u.searchParams.set("action","login");
+    u.searchParams.set("return_url", APP_URL);
     return u.toString();
   }
 
-  function getSessionFromHash_(){
-    const h = location.hash || "";
-    const m = h.match(/session=([^&]+)/);
-    return m ? decodeURIComponent(m[1]) : "";
+  async function api(op, params={}){
+    const session = loadSession();
+    const u = new URL(GAS_EXEC_URL);
+    u.searchParams.set("action","api");
+    u.searchParams.set("op", op);
+    u.searchParams.set("session", session);
+    u.searchParams.set("t", String(Date.now()));
+    for (const [k,v] of Object.entries(params)){
+      u.searchParams.set(k, String(v));
+    }
+    return await jsonp(u.toString());
   }
 
-  function setSession_(sess){
-    if (sess) localStorage.setItem("cw_session", sess);
+  function showLoginGate(){
+    showOverlay(true);
+    modalTitle.textContent = "ログイン";
+    modalPill.textContent = "LINE";
+    modalJa.textContent = I18N.needLogin[0];
+    modalEn.textContent = I18N.needLogin[1];
+    modalZh.textContent = I18N.needLogin[2];
+    modalKo.textContent = I18N.needLogin[3];
+
+    modalForm.style.display = "block";
+    modalForm.innerHTML = `
+      <div class="i18n-sub" style="margin-top:10px;">
+        <div>${I18N.loginNote[0]}</div>
+        <div>${I18N.loginNote[1]}</div>
+        <div>${I18N.loginNote[2]}</div>
+        <div>${I18N.loginNote[3]}</div>
+      </div>
+    `;
+
+    btnModalPrimary.textContent = I18N.loginCta[0];
+    btnModalSecondary.textContent = "閉じる";
+    btnModalPrimary.disabled = false;
+    btnModalSecondary.disabled = false;
+
+    btnModalPrimary.onclick = () => {
+      location.href = loginStartUrl();
+    };
+    btnModalSecondary.onclick = () => {
+      showOverlay(false);
+      enableButtons(false);
+    };
   }
 
-  function getSession_(){
-    return localStorage.getItem("cw_session") || "";
+  async function gateFlow(){
+    enableButtons(false);
+    elBadge.textContent = "準備中";
+    setDot("busy");
+
+    const session = loadSession();
+    if (!session){
+      setDot("error");
+      setStatusLines(I18N.needLogin);
+      showLoginGate();
+      return;
+    }
+
+    let st;
+    try{
+      st = await api("profile_status");
+    }catch(e){
+      setDot("error");
+      setStatusLines(I18N.netErr);
+      showLoginGate();
+      return;
+    }
+
+    if (st && st.ok === false && (String(st.message || "").includes("認証") || String(st.message || "").includes("期限"))){
+      clearSession();
+      setDot("error");
+      setStatusLines(I18N.needLogin);
+      showLoginGate();
+      return;
+    }
+
+    if (!(st && st.ok && st.has_profile)){
+      showOverlay(true);
+      renderProfileForm();
+      return;
+    }
+
+    showOverlay(false);
+    elBadge.textContent = "準備OK";
+    setDot("ok");
+    setStatusLines(I18N.ready);
+    enableButtons(true);
   }
 
-  function clearHash_(){
-    if (location.hash) history.replaceState(null, "", location.href.replace(/#.*$/, ""));
-  }
-
-  function loginUrl_(){
-    return GAS_EXEC_URL + "?action=login&return_url=" + encodeURIComponent(getReturnUrl_());
-  }
-
-  async function api_(op, params){
-    const session = getSession_();
-    if (!session) throw new Error("NO_SESSION");
-    const q = new URLSearchParams();
-    q.set("action", "api");
-    q.set("op", op);
-    q.set("session", session);
-    if (params) Object.keys(params).forEach(k => q.set(k, String(params[k])));
-    q.set("t", String(Date.now()));
-    const url = GAS_EXEC_URL + "?" + q.toString();
-    return await jsonp(url);
-  }
-
-  async function getGeo_(){
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error("no geo"));
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => reject(err),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
-      );
-    });
+  function markInvalid(map){
+    for (const k of Object.keys(map)){
+      const wrap = document.getElementById("wrap_" + k);
+      if (!wrap) continue;
+      wrap.classList.toggle("invalid", !!map[k]);
+    }
+    const consentWrap = document.getElementById("wrap_consent");
+    if (consentWrap && map.consent) consentWrap.classList.add("invalid");
   }
 
   function renderProfileForm(){
-    showOverlay(true);
+    modalTitle.textContent = I18N.profileGate.title;
+    modalPill.textContent = I18N.profileGate.pill;
 
-    modalTitle.textContent = "会員登録（初回のみ）";
-    modalPill.textContent = "初回のみ";
-    modalJa.textContent =
-`COMPASSION WORLDが
-平和で心地よい世界であり続けるために
-
-初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。
-ご登録後は、入店・退店の操作のみでスムーズにご利用いただけます。`;
-    modalEn.textContent = "A one-time registration is required before first use.";
-    modalZh.textContent = "首次使用前需要一次性登记。";
-    modalKo.textContent = "첫 이용 전 1회 등록이 필요합니다.";
+    modalJa.textContent = I18N.profileGate.lead[0];
+    modalEn.textContent = I18N.profileGate.lead[1];
+    modalZh.textContent = I18N.profileGate.lead[2];
+    modalKo.textContent = I18N.profileGate.lead[3];
 
     btnModalPrimary.textContent = "登録を送信";
     btnModalSecondary.textContent = "閉じる";
@@ -468,150 +499,91 @@ COMPASSION WORLDは、
 
     modalForm.style.display = "block";
     modalForm.innerHTML = `
+      <div class="i18n-sub" style="margin-top:10px;">
+        <div>
+          COMPASSION WORLDは、訪れるすべての方が安心して過ごせる平和であたたかな世界であることを大切にしています。<br>
+          その世界を守り続けるため、初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。<br>
+          ご登録後は、入店・退店の操作のみでスムーズにご利用いただけます。
+        </div>
+      </div>
+
       <div class="form">
         <div class="row2">
-          <div class="field">
+          <div id="wrap_last_name" class="field">
             <label>姓</label>
-            <input id="f_last" type="text" placeholder="例 上田" autocomplete="family-name" />
+            <input id="f_last_name" type="text" placeholder="例 上田" autocomplete="family-name" />
           </div>
-          <div class="field">
+          <div id="wrap_first_name" class="field">
             <label>名</label>
-            <input id="f_first" type="text" placeholder="例 歩夢" autocomplete="given-name" />
+            <input id="f_first_name" type="text" placeholder="例 歩夢" autocomplete="given-name" />
           </div>
         </div>
 
         <div class="row2">
-          <div class="field">
+          <div id="wrap_last_kana" class="field">
             <label>姓（カナ）</label>
             <input id="f_last_kana" type="text" placeholder="例 ウエダ" />
           </div>
-          <div class="field">
+          <div id="wrap_first_kana" class="field">
             <label>名（カナ）</label>
             <input id="f_first_kana" type="text" placeholder="例 アユム" />
           </div>
         </div>
 
-        <div class="field">
+        <div id="wrap_phone" class="field">
           <label>電話番号</label>
           <input id="f_phone" type="tel" placeholder="例 09012345678" autocomplete="tel" />
         </div>
 
-        <div class="field">
+        <div id="wrap_address" class="field">
           <label>住所</label>
-          <textarea id="f_addr" placeholder="例 山梨県北杜市..."></textarea>
+          <textarea id="f_address" placeholder="例 山梨県北杜市..."></textarea>
         </div>
 
-        <div class="field">
-          <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
-            <label>利用規約</label>
-            <span id="open_terms" class="linkLike">利用規約を開く</span>
-          </div>
-          <div id="terms_box" class="termsBox" style="display:none;"></div>
-        </div>
-
-        <div id="ck_terms_row" class="checkRow">
-          <input id="ck_terms" type="checkbox" disabled />
-          <div>
-            利用規約を確認する を開いて最後までスクロールすると、同意チェックが有効になります。
-            <div class="i18n-sub" style="margin-top:6px;">
-              <div>Open the Terms and scroll to the bottom to enable consent.</div>
-              <div>打开条款并滚动到底部后才能勾选同意。</div>
-              <div>약관을 열고 끝까지 스크롤하면 동의가 활성화됩니다.</div>
-            </div>
-          </div>
-        </div>
-
-        <div id="ck_world_row" class="checkRow">
-          <input id="ck_world" type="checkbox" />
+        <div id="wrap_consent" class="checkRow">
+          <input id="f_consent" type="checkbox" />
           <div>
             本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
             <div class="i18n-sub" style="margin-top:6px;">
               <div>I agree this system is used to keep COMPASSION WORLD peaceful and welcoming.</div>
               <div>我同意本系统用于守护COMPASSION WORLD的和平与舒适。</div>
-              <div>본 시스템이 COMPASSION WORLD의 평화로운 환경을 지키기 위해 사용됨에 동의합니다.</div>
+              <div>본 시스템이 COMPASSION WORLD의 평화로운 세계를 지키기 위해 사용됨에 동의합니다.</div>
             </div>
           </div>
         </div>
       </div>
     `;
 
-    const elTermsBox = document.getElementById("terms_box");
-    const elOpenTerms = document.getElementById("open_terms");
-    const elCkTerms = document.getElementById("ck_terms");
-
-    elOpenTerms.addEventListener("click", () => {
-      elTermsBox.style.display = "block";
-      elTermsBox.textContent = TERMS_TEXT;
-      elTermsBox.scrollTop = 0;
-      setStatusLines([
-        "利用規約を最後までスクロールしてください。",
-        "Please scroll the Terms to the bottom.",
-        "请将条款滚动到底部。",
-        "약관을 끝까지 스크롤해 주세요."
-      ]);
-      setDot("busy");
-    });
-
-    elTermsBox.addEventListener("scroll", () => {
-      const nearBottom = elTermsBox.scrollTop + elTermsBox.clientHeight >= elTermsBox.scrollHeight - 6;
-      if (nearBottom) {
-        elCkTerms.disabled = false;
-        setDot("ok");
-        setStatusLines([
-          "同意チェックが有効になりました。必要事項を入力して送信してください。",
-          "Consent enabled. Fill in and submit.",
-          "已启用同意勾选。请填写并提交。",
-          "동의가 활성화되었습니다. 입력 후 제출해 주세요."
-        ]);
-      }
-    });
-
     btnModalPrimary.onclick = async () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
 
-      const f = {
-        last_name: document.getElementById("f_last"),
-        first_name: document.getElementById("f_first"),
-        last_kana: document.getElementById("f_last_kana"),
-        first_kana: document.getElementById("f_first_kana"),
-        phone: document.getElementById("f_phone"),
-        address: document.getElementById("f_addr"),
-        ck_terms: document.getElementById("ck_terms"),
-        ck_world: document.getElementById("ck_world"),
-        ck_terms_row: document.getElementById("ck_terms_row"),
-        ck_world_row: document.getElementById("ck_world_row"),
-      };
-
-      [f.last_name,f.first_name,f.last_kana,f.first_kana,f.phone,f.address].forEach(el => el.classList.remove("invalid"));
-      f.ck_terms_row.classList.remove("invalid");
-      f.ck_world_row.classList.remove("invalid");
-
       const payload = {
-        last_name: f.last_name.value.trim(),
-        first_name: f.first_name.value.trim(),
-        last_kana: f.last_kana.value.trim(),
-        first_kana: f.first_kana.value.trim(),
-        phone: f.phone.value.trim(),
-        address: f.address.value.trim(),
-        consent: String(!!(f.ck_terms.checked && f.ck_world.checked))
+        last_name: document.getElementById("f_last_name").value.trim(),
+        first_name: document.getElementById("f_first_name").value.trim(),
+        last_kana: document.getElementById("f_last_kana").value.trim(),
+        first_kana: document.getElementById("f_first_kana").value.trim(),
+        phone: document.getElementById("f_phone").value.trim(),
+        address: document.getElementById("f_address").value.trim(),
+        consent: document.getElementById("f_consent").checked
       };
 
-      const missing = [];
-      if (!payload.last_name) { missing.push("last_name"); f.last_name.classList.add("invalid"); }
-      if (!payload.first_name) { missing.push("first_name"); f.first_name.classList.add("invalid"); }
-      if (!payload.last_kana) { missing.push("last_kana"); f.last_kana.classList.add("invalid"); }
-      if (!payload.first_kana) { missing.push("first_kana"); f.first_kana.classList.add("invalid"); }
-      if (!payload.phone) { missing.push("phone"); f.phone.classList.add("invalid"); }
-      if (!payload.address) { missing.push("address"); f.address.classList.add("invalid"); }
-      if (f.ck_terms.disabled || !f.ck_terms.checked) { missing.push("ck_terms"); f.ck_terms_row.classList.add("invalid"); }
-      if (!f.ck_world.checked) { missing.push("ck_world"); f.ck_world_row.classList.add("invalid"); }
+      const missingMap = {
+        last_name: !payload.last_name,
+        first_name: !payload.first_name,
+        last_kana: !payload.last_kana,
+        first_kana: !payload.first_kana,
+        phone: !payload.phone,
+        address: !payload.address,
+        consent: !payload.consent
+      };
+      markInvalid(missingMap);
 
-      if (missing.length) {
+      if (Object.values(missingMap).some(Boolean)){
         setDot("error");
         setStatusLines([
           "未入力の項目があります。赤く表示された箇所を確認してください。",
-          "Some items are missing. Please check highlighted fields.",
-          "有未填写项目。请检查标红处。",
+          "Some fields are missing. Check the highlighted fields.",
+          "有未填写项目。请检查红色标记处。",
           "미입력 항목이 있습니다. 빨간 표시를 확인해 주세요."
         ]);
         return;
@@ -620,18 +592,11 @@ COMPASSION WORLDは、
       setBusy(true);
       elBadge.textContent = "送信中";
       setDot("busy");
-      setStatusLines([
-        "登録を送信しています。しばらくお待ちください。",
-        "Sending registration... Please wait.",
-        "正在提交登记…请稍候。",
-        "등록 전송 중입니다. 잠시만 기다려 주세요."
-      ]);
 
       try{
-        const res = await api_("profile_set", payload);
-        if (res && res.ok) {
+        const res = await api("profile_set", payload);
+        if (res && res.ok){
           setDot("ok");
-          elBadge.textContent = "完了";
           setStatusLines([
             "登録が完了しました。入店または退店を押してください。",
             "Registration completed. Tap Check in or Check out.",
@@ -639,23 +604,35 @@ COMPASSION WORLDは、
             "등록 완료. 입장 또는 퇴장을 눌러 주세요."
           ]);
           showOverlay(false);
-          enableButtons(true);
-        } else {
+          await gateFlow();
+        }else{
+          if (res && res.code === "MISSING" && Array.isArray(res.missing)){
+            const mm = {};
+            res.missing.forEach(k => mm[k] = true);
+            markInvalid(mm);
+            setDot("error");
+            setStatusLines([
+              "未入力の項目があります。赤く表示された箇所を確認してください。",
+              "Some fields are missing. Check the highlighted fields.",
+              "有未填写项目。请检查红色标记处。",
+              "미입력 항목이 있습니다. 빨간 표시를 확인해 주세요."
+            ]);
+            return;
+          }
           setDot("error");
-          elBadge.textContent = "エラー";
           setStatusLines([
-            (res && res.message) ? res.message : "登録に失敗しました。もう一度お試しください。",
+            (res && res.message) ? String(res.message) : "登録に失敗しました。もう一度お試しください。",
             "Registration failed. Please try again.",
             "登记失败。请重试。",
             "등록에 실패했습니다. 다시 시도해 주세요."
           ]);
         }
-      } catch(e){
+      }catch(e){
         setDot("error");
-        elBadge.textContent = "エラー";
         setStatusLines(I18N.netErr);
-      } finally {
+      }finally{
         setBusy(false);
+        elBadge.textContent = "準備中";
       }
     };
 
@@ -663,7 +640,7 @@ COMPASSION WORLDは、
       showOverlay(false);
       setDot("error");
       setStatusLines([
-        "会員登録が完了していないため、入店退店はできません。",
+        "会員情報の登録が完了していないため、入店退店はできません。",
         "You can't proceed without registration.",
         "未完成登记，无法继续。",
         "등록이 완료되지 않아 진행할 수 없습니다."
@@ -672,117 +649,149 @@ COMPASSION WORLDは、
     };
   }
 
-  async function gateFlow(){
-    enableButtons(false);
-
-    const sess = getSession_();
-    if (!sess) {
-      setDot("error");
-      elBadge.textContent = "要ログイン";
-      setStatusLines(I18N.needLogin);
-
-      showOverlay(true);
-      setModal({
-        title: "LINEログイン",
-        pill: "必須",
-        body: I18N.needLogin,
-        primary: "LINEでログイン",
-        secondary: "閉じる"
-      });
-
-      btnModalPrimary.onclick = () => { location.href = loginUrl_(); };
-      btnModalSecondary.onclick = () => { showOverlay(false); };
-      return;
-    }
-
-    try{
-      const st = await api_("profile_status", {});
-      if (st && st.ok && st.has_profile) {
-        showOverlay(false);
-        elBadge.textContent = "準備OK";
-        setDot("ok");
-        setStatusLines(I18N.ready);
-        enableButtons(true);
-        return;
-      }
-      renderProfileForm();
-    } catch(e){
-      if (String(e && e.message) === "NO_SESSION") {
-        localStorage.removeItem("cw_session");
-        await gateFlow();
-        return;
-      }
-      elBadge.textContent = "エラー";
-      setDot("error");
-      setStatusLines(I18N.initFail);
-      enableButtons(false);
-    }
+  function distanceMeters(lat1,lng1,lat2,lng2){
+    const R = 6371000;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat/2)**2 +
+      Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+    return 2*R*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
-  async function callCheck_(op){
+  function getGeo(){
+    return new Promise((resolve, reject) => {
+      if (!window.isSecureContext){
+        reject(new Error("insecure"));
+        return;
+      }
+      if (!navigator.geolocation){
+        reject(new Error("no geo"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        err => reject(err),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    });
+  }
+
+  async function callCheck(op){
     setBusy(true);
     elBadge.textContent = "処理中";
     setDot("busy");
-    setStatusLines(["位置情報を確認しています...","Checking location...","正在确认位置…","위치를 확인 중입니다..."]);
+    setStatusLines(["通信中です。しばらくお待ちください。","Communicating... Please wait.","正在通信…请稍候。","통신 중입니다. 잠시만 기다려 주세요."]);
 
     let geo;
-    try{ geo = await getGeo_(); }
-    catch(e){
+    try{
+      geo = await getGeo();
+    }catch(e){
       setBusy(false);
       elBadge.textContent = "エラー";
       setDot("error");
-      setStatusLines(I18N.geoDenied);
+      if (String(e && e.message) === "insecure"){
+        setStatusLines(I18N.geoNeedHttps);
+      }else if (e && typeof e.code === "number"){
+        setStatusLines(I18N.geoDenied);
+      }else{
+        setStatusLines(I18N.netErr);
+      }
       return;
     }
 
-    setStatusLines(["通信中です。しばらくお待ちください。","Communicating... Please wait.","正在通信…请稍候。","통신 중입니다. 잠시만 기다려 주세요."]);
+    const d = distanceMeters(STORE_LAT, STORE_LNG, geo.lat, geo.lng);
+    if (d > GEOFENCE_RADIUS_M){
+      setBusy(false);
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.geoOut);
+      return;
+    }
 
     try{
-      const res = await api_(op, { lat: geo.lat, lng: geo.lng });
+      const res = await api(op === "in" ? "check_in" : "check_out", { lat: geo.lat, lng: geo.lng });
       if (res && res.ok){
         elBadge.textContent = "完了";
         setDot("ok");
-        setStatusLines([res.message || "完了しました。","Done.","完成。","완료."]);
-      } else {
-        if (res && res.code === "DENY_NEED_PROFILE") { renderProfileForm(); return; }
+        const ja = res.message || "完了しました。";
+        setStatusLines([
+          ja,
+          "Done.",
+          "完成。",
+          "완료."
+        ]);
+      }else{
+        if (res && res.code === "DENY_NEED_PROFILE"){
+          showOverlay(true);
+          renderProfileForm();
+          return;
+        }
+        if (res && (String(res.message || "").includes("認証") || String(res.message || "").includes("期限"))){
+          clearSession();
+          showLoginGate();
+          return;
+        }
         elBadge.textContent = "エラー";
         setDot("error");
-        setStatusLines([(res && res.message) ? res.message : "エラーが発生しました。","An error occurred.","发生错误。","오류가 발생했습니다."]);
+        setStatusLines([
+          (res && res.message) ? String(res.message) : "エラーが発生しました。もう一度お試しください。",
+          "An error occurred. Please try again.",
+          "发生错误。请重试。",
+          "오류가 발생했습니다. 다시 시도해 주세요."
+        ]);
       }
-    } catch(e){
+    }catch(e){
       elBadge.textContent = "エラー";
       setDot("error");
       setStatusLines(I18N.netErr);
-    } finally{
+    }finally{
       setBusy(false);
     }
   }
 
-  function openConfirm(op){
+  function openConfirm(action){
     showOverlay(true);
     enableButtons(false);
-    const cfg = op === "check_in" ? I18N.confirmIn : I18N.confirmOut;
+
+    const cfg = action === "in" ? I18N.confirmIn : I18N.confirmOut;
     setModal(cfg);
-    btnModalPrimary.onclick = async () => { showOverlay(false); enableButtons(false); await callCheck_(op); enableButtons(true); };
-    btnModalSecondary.onclick = () => { showOverlay(false); enableButtons(true); };
+
+    btnModalPrimary.onclick = async () => {
+      showOverlay(false);
+      enableButtons(false);
+      await callCheck(action);
+      enableButtons(true);
+    };
+    btnModalSecondary.onclick = () => {
+      showOverlay(false);
+      enableButtons(true);
+    };
   }
 
   async function init(){
     elBadge.textContent = "起動中";
     setDot("busy");
-    setStatusLines(I18N.boot);
+    setStatusLines(I18N.init);
     enableButtons(false);
 
-    const sess = getSessionFromHash_();
-    if (sess) { setSession_(sess); clearHash_(); }
+    const s = getSessionFromHash();
+    if (s){
+      saveSession(s);
+      history.replaceState(null, "", location.pathname + location.search);
+    }
 
     await gateFlow();
   }
 
-  btnIn.addEventListener("click", () => openConfirm("check_in"));
-  btnOut.addEventListener("click", () => openConfirm("check_out"));
+  btnIn.addEventListener("click", () => openConfirm("in"));
+  btnOut.addEventListener("click", () => openConfirm("out"));
+
   document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible") await gateFlow();
+    if (document.visibilityState === "visible") {
+      await gateFlow();
+    }
   });
 
   init();
