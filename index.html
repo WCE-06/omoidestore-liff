@@ -1171,12 +1171,23 @@ COMPASSION WORLDの平和な世界を守るために
     try{
       await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
       await gateFlow();
-    }catch(e){
-      elBadge.textContent = "エラー";
-      setDot("error");
-      setStatusLines(I18N.initFail);
-      enableButtons(false);
-    }
+   } catch (e) {
+  elBadge.textContent = "エラー";
+  setDot("error");
+
+  const code = e && e.code ? String(e.code) : "";
+  const msg  = e && e.message ? String(e.message) : "";
+  const detail = (code || msg) ? ` (${code} ${msg})` : "";
+
+  setStatusLines([
+    "初期化に失敗しました。通信環境と設定を確認してください。" + detail,
+    "Initialization failed. Check network and settings." + detail,
+    "初始化失败。请检查网络和设置。" + detail,
+    "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요." + detail
+  ]);
+
+  enableButtons(false);
+}
   }
 
   btnIn.addEventListener("click", () => openConfirm("in"));
