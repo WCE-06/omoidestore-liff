@@ -45,7 +45,7 @@
     .i18n-sub div{ font-size:12px; color:var(--muted); }
 
     .actions{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    button, a.btn{
+    button{
       appearance:none; border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       color:var(--text);
@@ -54,10 +54,8 @@
       cursor:pointer;
       transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
       user-select:none;
-      text-decoration:none;
-      display:block;
     }
-    button:active, a.btn:active{ transform: translateY(1px); }
+    button:active{ transform: translateY(1px); }
     button:disabled{ opacity:.55; cursor:not-allowed; }
 
     .btnText{ text-align:center; }
@@ -245,15 +243,10 @@
 
 <script>
   const GAS_EXEC_URL =
-    "https://script.google.com/macros/s/AKfycby5g6xOm063V8Wc176pnTkON4hhsm8FnrAvzwD4C4QhF-tcJDlP6n59jofZgqOIc1bf/exec";
+    "https://script.google.com/macros/s/AKfycbx7zcqhZho4NaMTlMhwP7-C0HRVKAhs6edk6GtEIgoDfqFfYPJKzymIb4XIFDgV59L0/exec";
 
   const I18N = {
-    boot: [
-      "初期化中...",
-      "Initializing...",
-      "正在初始化...",
-      "초기화 중..."
-    ],
+    boot: ["初期化中...","Initializing...","正在初始化...","초기화 중..."],
     needLogin: [
       "ご利用にはLINEログインが必要です。ログインしてください。",
       "LINE Login is required. Please log in.",
@@ -436,9 +429,7 @@ COMPASSION WORLDは、
     q.set("action", "api");
     q.set("op", op);
     q.set("session", session);
-    if (params) {
-      Object.keys(params).forEach(k => q.set(k, String(params[k])));
-    }
+    if (params) Object.keys(params).forEach(k => q.set(k, String(params[k])));
     q.set("t", String(Date.now()));
     const url = GAS_EXEC_URL + "?" + q.toString();
     return await jsonp(url);
@@ -591,11 +582,9 @@ COMPASSION WORLDは、
         ck_world_row: document.getElementById("ck_world_row"),
       };
 
-      Object.values(f).forEach(el => {
-        if (el && el.classList) el.classList.remove("invalid");
-      });
-      if (f.ck_terms_row) f.ck_terms_row.classList.remove("invalid");
-      if (f.ck_world_row) f.ck_world_row.classList.remove("invalid");
+      [f.last_name,f.first_name,f.last_kana,f.first_kana,f.phone,f.address].forEach(el => el.classList.remove("invalid"));
+      f.ck_terms_row.classList.remove("invalid");
+      f.ck_world_row.classList.remove("invalid");
 
       const payload = {
         last_name: f.last_name.value.trim(),
@@ -701,12 +690,8 @@ COMPASSION WORLDは、
         secondary: "閉じる"
       });
 
-      btnModalPrimary.onclick = () => {
-        location.href = loginUrl_();
-      };
-      btnModalSecondary.onclick = () => {
-        showOverlay(false);
-      };
+      btnModalPrimary.onclick = () => { location.href = loginUrl_(); };
+      btnModalSecondary.onclick = () => { showOverlay(false); };
       return;
     }
 
@@ -738,17 +723,11 @@ COMPASSION WORLDは、
     setBusy(true);
     elBadge.textContent = "処理中";
     setDot("busy");
-    setStatusLines([
-      "位置情報を確認しています...",
-      "Checking location...",
-      "正在确认位置…",
-      "위치를 확인 중입니다..."
-    ]);
+    setStatusLines(["位置情報を確認しています...","Checking location...","正在确认位置…","위치를 확인 중입니다..."]);
 
     let geo;
-    try{
-      geo = await getGeo_();
-    }catch(e){
+    try{ geo = await getGeo_(); }
+    catch(e){
       setBusy(false);
       elBadge.textContent = "エラー";
       setDot("error");
@@ -756,39 +735,19 @@ COMPASSION WORLDは、
       return;
     }
 
-    setStatusLines([
-      "通信中です。しばらくお待ちください。",
-      "Communicating... Please wait.",
-      "正在通信…请稍候。",
-      "통신 중입니다. 잠시만 기다려 주세요."
-    ]);
+    setStatusLines(["通信中です。しばらくお待ちください。","Communicating... Please wait.","正在通信…请稍候。","통신 중입니다. 잠시만 기다려 주세요."]);
 
     try{
       const res = await api_(op, { lat: geo.lat, lng: geo.lng });
       if (res && res.ok){
         elBadge.textContent = "完了";
         setDot("ok");
-        const msgJa = res.message || "完了しました。";
-        setStatusLines([
-          msgJa,
-          "Done.",
-          "完成。",
-          "완료."
-        ]);
+        setStatusLines([res.message || "完了しました。","Done.","完成。","완료."]);
       } else {
-        if (res && res.code === "DENY_NEED_PROFILE") {
-          renderProfileForm();
-          return;
-        }
+        if (res && res.code === "DENY_NEED_PROFILE") { renderProfileForm(); return; }
         elBadge.textContent = "エラー";
         setDot("error");
-        const msg = (res && res.message) ? res.message : "エラーが発生しました。";
-        setStatusLines([
-          msg,
-          "An error occurred.",
-          "发生错误。",
-          "오류가 발생했습니다."
-        ]);
+        setStatusLines([(res && res.message) ? res.message : "エラーが発生しました。","An error occurred.","发生错误。","오류가 발생했습니다."]);
       }
     } catch(e){
       elBadge.textContent = "エラー";
@@ -802,20 +761,10 @@ COMPASSION WORLDは、
   function openConfirm(op){
     showOverlay(true);
     enableButtons(false);
-
     const cfg = op === "check_in" ? I18N.confirmIn : I18N.confirmOut;
     setModal(cfg);
-
-    btnModalPrimary.onclick = async () => {
-      showOverlay(false);
-      enableButtons(false);
-      await callCheck_(op);
-      enableButtons(true);
-    };
-    btnModalSecondary.onclick = () => {
-      showOverlay(false);
-      enableButtons(true);
-    };
+    btnModalPrimary.onclick = async () => { showOverlay(false); enableButtons(false); await callCheck_(op); enableButtons(true); };
+    btnModalSecondary.onclick = () => { showOverlay(false); enableButtons(true); };
   }
 
   async function init(){
@@ -825,21 +774,15 @@ COMPASSION WORLDは、
     enableButtons(false);
 
     const sess = getSessionFromHash_();
-    if (sess) {
-      setSession_(sess);
-      clearHash_();
-    }
+    if (sess) { setSession_(sess); clearHash_(); }
 
     await gateFlow();
   }
 
   btnIn.addEventListener("click", () => openConfirm("check_in"));
   btnOut.addEventListener("click", () => openConfirm("check_out"));
-
   document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible") {
-      await gateFlow();
-    }
+    if (document.visibilityState === "visible") await gateFlow();
   });
 
   init();
