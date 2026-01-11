@@ -9,7 +9,6 @@
       --bg:#0b0f1a; --card:#121a2b; --text:#e7ecff; --muted:#aab6da;
       --good:#1db954; --warn:#f4c542; --bad:#ff5a6a;
       --shadow: 0 10px 30px rgba(0,0,0,.35); --radius: 18px;
-      --line:#00c300;
     }
     *{box-sizing:border-box}
     body{
@@ -41,12 +40,12 @@
     .dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn); box-shadow:0 0 0 4px rgba(244,197,66,.18); flex:0 0 auto;}
 
     .i18nBlock{ line-height:1.45; }
-    .i18n-ja{ font-size:15px; color:var(--text); font-weight:650; }
+    .i18n-ja{ font-size:15px; color:var(--text); font-weight:650; white-space:pre-line; }
     .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
     .i18n-sub div{ font-size:12px; color:var(--muted); }
 
     .actions{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    button{
+    button, a.btn{
       appearance:none; border:1px solid rgba(255,255,255,.14);
       background:rgba(255,255,255,.06);
       color:var(--text);
@@ -55,8 +54,10 @@
       cursor:pointer;
       transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
       user-select:none;
+      text-decoration:none;
+      display:block;
     }
-    button:active{ transform: translateY(1px); }
+    button:active, a.btn:active{ transform: translateY(1px); }
     button:disabled{ opacity:.55; cursor:not-allowed; }
 
     .btnText{ text-align:center; }
@@ -65,12 +66,44 @@
 
     .btnIn{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
     .btnOut{ border-color: rgba(170,182,218,.25); background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06)); }
-    .btnLine{ border-color: rgba(0,195,0,.45); background: linear-gradient(180deg, rgba(0,195,0,.24), rgba(255,255,255,.06)); }
+
+    .footerNote{ margin-top:14px; color:var(--muted); font-size:12px; line-height:1.5; }
+
+    .overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width:min(640px, 100%);
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .modalTop{ display:flex; align-items:center; gap:12px; justify-content:space-between; }
+    .modalTitle{ margin:0; font-size:15px; }
+    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap; }
+    .modalBody{ margin-top:10px; }
+
+    .modalActions{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:14px; }
+    .btnPrimary{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
     .btnGhost{ border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.05); }
 
-    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .form{ margin-top:12px; display:grid; gap:10px; }
+    .form{
+      margin-top:12px;
+      display:grid;
+      gap:10px;
+    }
     .field{ display:grid; gap:6px; }
+    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     label{ font-size:12px; color:var(--muted); }
     input, textarea{
       width:100%;
@@ -83,9 +116,9 @@
       outline:none;
     }
     textarea{ min-height: 90px; resize: vertical; }
-    .err{
-      border-color: rgba(255,90,106,.9) !important;
-      box-shadow: 0 0 0 4px rgba(255,90,106,.18);
+    .invalid{
+      border-color: rgba(255,90,106,.85) !important;
+      box-shadow: 0 0 0 3px rgba(255,90,106,.18) !important;
     }
     .checkRow{
       display:flex;
@@ -96,42 +129,33 @@
       line-height:1.5;
       padding:10px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
     }
-    .checkRow.err{
-      border-color: rgba(255,90,106,.9);
-      box-shadow: 0 0 0 4px rgba(255,90,106,.18);
+    .checkRow.invalid{
+      border-color: rgba(255,90,106,.85) !important;
+      box-shadow: 0 0 0 3px rgba(255,90,106,.18) !important;
     }
     .checkRow input{ width:18px; height:18px; margin-top:2px; }
-    .note{
-      color:var(--muted);
+
+    .termsBox{
+      margin-top:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      padding:12px;
+      color: var(--muted);
       font-size:12px;
       line-height:1.6;
-      margin-top:10px;
+      max-height: 240px;
+      overflow:auto;
+      white-space: pre-line;
     }
-    .overlay{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.55);
-      backdrop-filter: blur(6px);
-      display:none;
-      align-items:center; justify-content:center;
-      padding:18px;
-      z-index:9999;
+    .linkLike{
+      color: var(--text);
+      text-decoration: underline;
+      cursor: pointer;
     }
-    .overlay.show{ display:flex; }
-    .modal{
-      width:min(640px, 100%);
-      border-radius:20px;
-      border:1px solid rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
-      box-shadow: var(--shadow);
-      padding:16px;
-    }
-    .modalTop{ display:flex; align-items:center; gap:12px; justify-content:space-between; }
-    .modalTitle{ margin:0; font-size:15px; }
-    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap; }
-    .modalActions{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:14px; }
   </style>
 </head>
 
@@ -157,59 +181,36 @@
         </div>
       </div>
 
-      <div id="loginArea" style="display:none;">
-        <button id="btnLogin" class="btnLine">
+      <div class="actions" id="actions">
+        <button id="btnIn" class="btnIn" disabled>
           <div class="btnText">
-            <div class="ja">LINEでログイン</div>
+            <div class="ja">入店</div>
             <div class="sub">
-              <div>Login with LINE</div>
-              <div>使用LINE登录</div>
-              <div>LINE으로 로그인</div>
+              <div>Check in</div>
+              <div>进入</div>
+              <div>입장</div>
             </div>
           </div>
         </button>
-        <div class="note">
-          初回のみ、LINEログインが必要です。ログイン後は入店・退店の操作のみでご利用いただけます。
-          <div class="i18n-sub" style="margin-top:8px;">
-            <div>Only the first time. After login, you can simply check in/out.</div>
-            <div>仅首次需要登录。之后只需进入/离开操作。</div>
-            <div>최초 1회만 필요합니다. 이후 입장/퇴장만 하면 됩니다.</div>
+
+        <button id="btnOut" class="btnOut" disabled>
+          <div class="btnText">
+            <div class="ja">退店</div>
+            <div class="sub">
+              <div>Check out</div>
+              <div>离开</div>
+              <div>퇴장</div>
+            </div>
           </div>
-        </div>
+        </button>
       </div>
 
-      <div id="actionsArea" style="display:none;">
-        <div class="actions">
-          <button id="btnIn" class="btnIn" disabled>
-            <div class="btnText">
-              <div class="ja">入店</div>
-              <div class="sub">
-                <div>Check in</div>
-                <div>进入</div>
-                <div>입장</div>
-              </div>
-            </div>
-          </button>
-
-          <button id="btnOut" class="btnOut" disabled>
-            <div class="btnText">
-              <div class="ja">退店</div>
-              <div class="sub">
-                <div>Check out</div>
-                <div>离开</div>
-                <div>퇴장</div>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        <div class="note">
-          COMPASSION WORLDが平和で心地よい世界であり続けるために、ご協力をお願いします。
-          <div class="i18n-sub" style="margin-top:8px;">
-            <div>Thank you for helping keep COMPASSION WORLD peaceful and comfortable.</div>
-            <div>感谢协助维护 COMPASSION WORLD 的平和与舒适。</div>
-            <div>COMPASSION WORLD가 평화롭고 편안한 공간으로 유지되도록 협조 부탁드립니다.</div>
-          </div>
+      <div class="footerNote">
+        処理中はボタンが押せません。画面の案内に沿って操作してください。
+        <div class="i18n-sub" style="margin-top:8px;">
+          <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
+          <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
+          <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
         </div>
       </div>
     </section>
@@ -218,327 +219,630 @@
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modalTop">
-        <h2 id="modalTitle" class="modalTitle">会員情報の登録</h2>
-        <div class="pill">初回のみ</div>
+        <h2 id="modalTitle" class="modalTitle">確認</h2>
+        <div id="modalPill" class="pill">案内</div>
       </div>
 
-      <div class="note" style="margin-top:10px;">
-        初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。ご登録後は、入店・退店の操作のみでスムーズにご利用いただけます。
-      </div>
-
-      <div class="form">
-        <div class="grid2">
-          <div class="field">
-            <label>姓</label>
-            <input id="f_last" type="text" autocomplete="family-name" />
-          </div>
-          <div class="field">
-            <label>名</label>
-            <input id="f_first" type="text" autocomplete="given-name" />
+      <div class="modalBody">
+        <div class="i18nBlock">
+          <div id="modalJa" class="i18n-ja">確認中...</div>
+          <div class="i18n-sub">
+            <div id="modalEn">Checking...</div>
+            <div id="modalZh">正在确认...</div>
+            <div id="modalKo">확인 중...</div>
           </div>
         </div>
 
-        <div class="grid2">
-          <div class="field">
-            <label>セイ</label>
-            <input id="f_last_kana" type="text" inputmode="kana" />
-          </div>
-          <div class="field">
-            <label>メイ</label>
-            <input id="f_first_kana" type="text" inputmode="kana" />
-          </div>
-        </div>
+        <div id="modalForm" style="display:none;"></div>
 
-        <div class="field">
-          <label>電話番号</label>
-          <input id="f_phone" type="tel" autocomplete="tel" />
-        </div>
-
-        <div class="field">
-          <label>住所</label>
-          <textarea id="f_addr"></textarea>
-        </div>
-
-        <div class="checkRow" id="agreeBox">
-          <input id="f_consent" type="checkbox" />
-          <div>
-            本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
-          </div>
-        </div>
-
-        <div class="modalActions">
-          <button id="btnSubmit" class="btnLine">登録を送信</button>
-          <button id="btnClose" class="btnGhost">閉じる</button>
+        <div id="modalActions" class="modalActions">
+          <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
+          <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
         </div>
       </div>
     </div>
   </div>
 
 <script>
-  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzWz9IH93wc73_Kf1sS52jNb67l1Hjq9N1nSOXGXtMjSFPGA4djbDQNuKAAz_O0uaIx/exec";
-  const RETURN_URL = "https://wce-06.github.io/omoidestore-liff/";
+  const GAS_EXEC_URL =
+    "https://script.google.com/macros/s/AKfycby5g6xOm063V8Wc176pnTkON4hhsm8FnrAvzwD4C4QhF-tcJDlP6n59jofZgqOIc1bf/exec";
+
+  const I18N = {
+    boot: [
+      "初期化中...",
+      "Initializing...",
+      "正在初始化...",
+      "초기화 중..."
+    ],
+    needLogin: [
+      "ご利用にはLINEログインが必要です。ログインしてください。",
+      "LINE Login is required. Please log in.",
+      "需要LINE登录。请先登录。",
+      "LINE 로그인이 필요합니다. 로그인해 주세요."
+    ],
+    ready: [
+      "準備ができました。入店または退店を押してください。",
+      "Ready. Tap Check in or Check out.",
+      "准备就绪。请选择进入或离开。",
+      "준비 완료. 입장 또는 퇴장을 눌러 주세요."
+    ],
+    initFail: [
+      "初期化に失敗しました。通信環境と設定を確認してください。",
+      "Initialization failed. Check network and settings.",
+      "初始化失败。请检查网络和设置。",
+      "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
+    ],
+    netErr: [
+      "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
+      "Network error or timeout. Check your connection.",
+      "通信错误或超时。请检查网络。",
+      "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
+    ],
+    geoDenied: [
+      "位置情報を取得できませんでした。ブラウザの位置情報を許可してお試しください。",
+      "Could not get location. Please allow location permission and try again.",
+      "无法获取位置。请允许定位权限后重试。",
+      "위치를 가져올 수 없습니다. 위치 권한을 허용하고 다시 시도해 주세요."
+    ],
+    confirmIn: {
+      title: "確認", pill: "入店",
+      body: ["入店を記録します。よろしいですか。","You are about to check in. Continue?","将记录进入。继续吗？","입장을 기록합니다. 진행할까요?"],
+      primary: "入店する", secondary: "やめる"
+    },
+    confirmOut: {
+      title: "確認", pill: "退店",
+      body: ["退店を記録します。よろしいですか。","You are about to check out. Continue?","将记录离开。继续吗？","퇴장을 기록합니다. 진행할까요?"],
+      primary: "退店する", secondary: "やめる"
+    }
+  };
+
+  const TERMS_TEXT = `
+COMPASSION WORLDが
+平和で心地よい世界であり続けるために
+
+COMPASSION WORLDは、
+訪れるすべての方が安心して過ごせる
+平和であたたかな世界であることを大切にしています。
+その世界を守り続けるため、
+初めてご利用いただく際のみ、
+会員登録へのご協力をお願いしています。
+ご登録後は、入店・退店の操作のみで
+スムーズにご利用いただけます。
+
+利用規約（抜粋）
+・施設内の備品、設備、商品、その他の物品を破損・汚損した場合、故意過失を問わず、原状回復または全額弁償に同意します。
+・未精算や緊急時、防犯上の確認が必要な場合に備え、登録情報を用いて連絡を受けることに同意します。
+  `.trim();
 
   const elBadge = document.getElementById("badge");
   const elDot = document.getElementById("dot");
-  const statusJa = document.getElementById("statusJa");
-  const statusEn = document.getElementById("statusEn");
-  const statusZh = document.getElementById("statusZh");
-  const statusKo = document.getElementById("statusKo");
-
-  const loginArea = document.getElementById("loginArea");
-  const actionsArea = document.getElementById("actionsArea");
-  const btnLogin = document.getElementById("btnLogin");
+  const elStatusJa = document.getElementById("statusJa");
+  const elStatusEn = document.getElementById("statusEn");
+  const elStatusZh = document.getElementById("statusZh");
+  const elStatusKo = document.getElementById("statusKo");
   const btnIn = document.getElementById("btnIn");
   const btnOut = document.getElementById("btnOut");
+  const card = document.querySelector(".card");
 
   const overlay = document.getElementById("overlay");
-  const btnSubmit = document.getElementById("btnSubmit");
-  const btnClose = document.getElementById("btnClose");
-
-  const f_last = document.getElementById("f_last");
-  const f_first = document.getElementById("f_first");
-  const f_last_kana = document.getElementById("f_last_kana");
-  const f_first_kana = document.getElementById("f_first_kana");
-  const f_phone = document.getElementById("f_phone");
-  const f_addr = document.getElementById("f_addr");
-  const f_consent = document.getElementById("f_consent");
-  const agreeBox = document.getElementById("agreeBox");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalPill = document.getElementById("modalPill");
+  const modalJa = document.getElementById("modalJa");
+  const modalEn = document.getElementById("modalEn");
+  const modalZh = document.getElementById("modalZh");
+  const modalKo = document.getElementById("modalKo");
+  const modalForm = document.getElementById("modalForm");
+  const btnModalPrimary = document.getElementById("btnModalPrimary");
+  const btnModalSecondary = document.getElementById("btnModalSecondary");
 
   function setDot(state){
     if (state === "ok") { elDot.style.background = "var(--good)"; elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)"; return; }
     if (state === "busy") { elDot.style.background = "var(--warn)"; elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)"; return; }
-    elDot.style.background = "var(--bad)";
-    elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)";
+    if (state === "error") { elDot.style.background = "var(--bad)"; elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)"; return; }
+    elDot.style.background = "var(--warn)";
+    elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
   }
 
-  function setStatus(lines){
-    statusJa.textContent = lines[0] || "";
-    statusEn.textContent = lines[1] || "";
-    statusZh.textContent = lines[2] || "";
-    statusKo.textContent = lines[3] || "";
+  function setStatusLines(lines){
+    elStatusJa.textContent = lines[0] || "";
+    elStatusEn.textContent = lines[1] || "";
+    elStatusZh.textContent = lines[2] || "";
+    elStatusKo.textContent = lines[3] || "";
   }
 
-  function enableButtons(on){
-    btnIn.disabled = !on;
-    btnOut.disabled = !on;
+  function enableButtons(ready){
+    btnIn.disabled = !ready;
+    btnOut.disabled = !ready;
   }
 
-  function showOverlay(on){
-    overlay.classList.toggle("show", !!on);
-    overlay.setAttribute("aria-hidden", on ? "false" : "true");
+  function showOverlay(show){
+    overlay.classList.toggle("show", !!show);
+    overlay.setAttribute("aria-hidden", show ? "false" : "true");
   }
 
-  function jsonp(url){
+  function setBusy(on){
+    card.setAttribute("aria-busy", on ? "true" : "false");
+    enableButtons(!on);
+  }
+
+  function setModal(cfg){
+    modalTitle.textContent = cfg.title || "";
+    modalPill.textContent = cfg.pill || "";
+    modalJa.textContent = (cfg.body && cfg.body[0]) || "";
+    modalEn.textContent = (cfg.body && cfg.body[1]) || "";
+    modalZh.textContent = (cfg.body && cfg.body[2]) || "";
+    modalKo.textContent = (cfg.body && cfg.body[3]) || "";
+    modalForm.style.display = "none";
+    modalForm.innerHTML = "";
+    btnModalPrimary.textContent = cfg.primary || "";
+    btnModalSecondary.textContent = cfg.secondary || "";
+    btnModalPrimary.disabled = false;
+    btnModalSecondary.disabled = false;
+  }
+
+  function jsonp(url) {
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
       window[cb] = (data) => { cleanup(); resolve(data); };
 
-      const s = document.createElement("script");
+      const script = document.createElement("script");
       const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 20000);
 
-      function cleanup(){
+      function cleanup() {
         clearTimeout(timer);
-        if (s.parentNode) s.parentNode.removeChild(s);
+        if (script.parentNode) script.parentNode.removeChild(script);
         delete window[cb];
       }
 
       const sep = url.includes("?") ? "&" : "?";
-      s.src = url + sep + "callback=" + encodeURIComponent(cb);
-      s.onerror = () => { cleanup(); reject(new Error("load error")); };
-      document.body.appendChild(s);
+      script.src = url + sep + "callback=" + encodeURIComponent(cb);
+      script.onerror = () => { cleanup(); reject(new Error("load error")); };
+      document.body.appendChild(script);
     });
   }
 
-  function getSession(){
-    const fromHash = new URLSearchParams(location.hash.replace(/^#/, "")).get("session");
-    if (fromHash) {
-      localStorage.setItem("cw_session", fromHash);
-      history.replaceState(null, "", location.pathname + location.search);
-    }
+  function getReturnUrl_(){
+    const u = new URL(location.href);
+    u.hash = "";
+    return u.toString();
+  }
+
+  function getSessionFromHash_(){
+    const h = location.hash || "";
+    const m = h.match(/session=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  function setSession_(sess){
+    if (sess) localStorage.setItem("cw_session", sess);
+  }
+
+  function getSession_(){
     return localStorage.getItem("cw_session") || "";
   }
 
-  function clearErrors(){
-    [f_last,f_first,f_last_kana,f_first_kana,f_phone,f_addr].forEach(el => el.classList.remove("err"));
-    agreeBox.classList.remove("err");
+  function clearHash_(){
+    if (location.hash) history.replaceState(null, "", location.href.replace(/#.*$/, ""));
   }
 
-  function markMissing(missing){
-    const map = {
-      last_name: f_last,
-      first_name: f_first,
-      last_kana: f_last_kana,
-      first_kana: f_first_kana,
-      phone: f_phone,
-      address: f_addr,
-      consent: agreeBox
-    };
-    missing.forEach(k => {
-      const el = map[k];
-      if (!el) return;
-      el.classList.add("err");
-    });
+  function loginUrl_(){
+    return GAS_EXEC_URL + "?action=login&return_url=" + encodeURIComponent(getReturnUrl_());
   }
 
-  function getGeo(){
+  async function api_(op, params){
+    const session = getSession_();
+    if (!session) throw new Error("NO_SESSION");
+    const q = new URLSearchParams();
+    q.set("action", "api");
+    q.set("op", op);
+    q.set("session", session);
+    if (params) {
+      Object.keys(params).forEach(k => q.set(k, String(params[k])));
+    }
+    q.set("t", String(Date.now()));
+    const url = GAS_EXEC_URL + "?" + q.toString();
+    return await jsonp(url);
+  }
+
+  async function getGeo_(){
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) return reject(new Error("no geo"));
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         (err) => reject(err),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
       );
     });
   }
 
-  async function ensureProfile(session){
-    const r = await jsonp(GAS_WEBAPP_URL + "?action=api&op=profile_status&session=" + encodeURIComponent(session) + "&t=" + Date.now());
-    if (r && r.ok && r.has_profile) return true;
+  function renderProfileForm(){
     showOverlay(true);
-    return false;
-  }
 
-  async function submitProfile(session){
-    clearErrors();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    modalTitle.textContent = "会員登録（初回のみ）";
+    modalPill.textContent = "初回のみ";
+    modalJa.textContent =
+`COMPASSION WORLDが
+平和で心地よい世界であり続けるために
 
-    setDot("busy");
-    elBadge.textContent = "送信中";
-    setStatus(["登録を送信しています...", "Sending...", "正在发送...", "전송 중..."]);
+初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。
+ご登録後は、入店・退店の操作のみでスムーズにご利用いただけます。`;
+    modalEn.textContent = "A one-time registration is required before first use.";
+    modalZh.textContent = "首次使用前需要一次性登记。";
+    modalKo.textContent = "첫 이용 전 1회 등록이 필요합니다.";
 
-    const url =
-      GAS_WEBAPP_URL + "?action=api&op=profile_set" +
-      "&session=" + encodeURIComponent(session) +
-      "&last_name=" + encodeURIComponent(f_last.value.trim()) +
-      "&first_name=" + encodeURIComponent(f_first.value.trim()) +
-      "&last_kana=" + encodeURIComponent(f_last_kana.value.trim()) +
-      "&first_kana=" + encodeURIComponent(f_first_kana.value.trim()) +
-      "&phone=" + encodeURIComponent(f_phone.value.trim()) +
-      "&address=" + encodeURIComponent(f_addr.value.trim()) +
-      "&consent=" + encodeURIComponent(String(!!f_consent.checked)) +
-      "&t=" + Date.now();
+    btnModalPrimary.textContent = "登録を送信";
+    btnModalSecondary.textContent = "閉じる";
+    btnModalPrimary.disabled = false;
+    btnModalSecondary.disabled = false;
 
-    const r = await jsonp(url);
-    if (r && r.ok) {
-      setDot("ok");
-      elBadge.textContent = "完了";
-      setStatus(["登録が完了しました。", "Registration completed.", "登记完成。", "등록 완료."]);
-      showOverlay(false);
-      return true;
-    }
+    modalForm.style.display = "block";
+    modalForm.innerHTML = `
+      <div class="form">
+        <div class="row2">
+          <div class="field">
+            <label>姓</label>
+            <input id="f_last" type="text" placeholder="例 上田" autocomplete="family-name" />
+          </div>
+          <div class="field">
+            <label>名</label>
+            <input id="f_first" type="text" placeholder="例 歩夢" autocomplete="given-name" />
+          </div>
+        </div>
 
-    elBadge.textContent = "エラー";
-    setDot("bad");
-    if (r && r.code === "MISSING") {
-      setStatus(["未入力の項目があります。赤く表示された箇所をご確認ください。", "Missing fields. Check red fields.", "有未填写项目，请检查红色标记。", "미입력 항목이 있습니다. 빨간 표시를 확인해 주세요."]);
-      markMissing(r.missing || []);
-      return false;
-    }
-    setStatus([ (r && r.message) ? r.message : "登録に失敗しました。", "Failed.", "失败。", "실패。" ]);
-    return false;
-  }
+        <div class="row2">
+          <div class="field">
+            <label>姓（カナ）</label>
+            <input id="f_last_kana" type="text" placeholder="例 ウエダ" />
+          </div>
+          <div class="field">
+            <label>名（カナ）</label>
+            <input id="f_first_kana" type="text" placeholder="例 アユム" />
+          </div>
+        </div>
 
-  async function doCheck(op){
-    const session = getSession();
-    if (!session) return;
+        <div class="field">
+          <label>電話番号</label>
+          <input id="f_phone" type="tel" placeholder="例 09012345678" autocomplete="tel" />
+        </div>
 
-    enableButtons(false);
-    setDot("busy");
-    elBadge.textContent = "処理中";
-    setStatus(["位置情報を確認しています...", "Checking location...", "正在确认位置...", "위치 확인 중..."]);
+        <div class="field">
+          <label>住所</label>
+          <textarea id="f_addr" placeholder="例 山梨県北杜市..."></textarea>
+        </div>
 
-    let geo;
-    try {
-      geo = await getGeo();
-    } catch(e) {
-      setDot("bad");
-      elBadge.textContent = "エラー";
-      setStatus(["位置情報を取得できませんでした。許可設定をご確認ください。", "Could not get location.", "无法获取位置。", "위치를 가져오지 못했습니다."]);
-      enableButtons(true);
-      return;
-    }
+        <div class="field">
+          <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
+            <label>利用規約</label>
+            <span id="open_terms" class="linkLike">利用規約を開く</span>
+          </div>
+          <div id="terms_box" class="termsBox" style="display:none;"></div>
+        </div>
 
-    setStatus(["通信中です...", "Communicating...", "正在通信...", "통신 중..."]);
-    const url =
-      GAS_WEBAPP_URL + "?action=api&op=" + encodeURIComponent(op) +
-      "&session=" + encodeURIComponent(session) +
-      "&lat=" + encodeURIComponent(String(geo.lat)) +
-      "&lng=" + encodeURIComponent(String(geo.lng)) +
-      "&t=" + Date.now();
+        <div id="ck_terms_row" class="checkRow">
+          <input id="ck_terms" type="checkbox" disabled />
+          <div>
+            利用規約を確認する を開いて最後までスクロールすると、同意チェックが有効になります。
+            <div class="i18n-sub" style="margin-top:6px;">
+              <div>Open the Terms and scroll to the bottom to enable consent.</div>
+              <div>打开条款并滚动到底部后才能勾选同意。</div>
+              <div>약관을 열고 끝까지 스크롤하면 동의가 활성화됩니다.</div>
+            </div>
+          </div>
+        </div>
 
-    try {
-      const r = await jsonp(url);
-      if (r && r.ok) {
+        <div id="ck_world_row" class="checkRow">
+          <input id="ck_world" type="checkbox" />
+          <div>
+            本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
+            <div class="i18n-sub" style="margin-top:6px;">
+              <div>I agree this system is used to keep COMPASSION WORLD peaceful and welcoming.</div>
+              <div>我同意本系统用于守护COMPASSION WORLD的和平与舒适。</div>
+              <div>본 시스템이 COMPASSION WORLD의 평화로운 환경을 지키기 위해 사용됨에 동의합니다.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const elTermsBox = document.getElementById("terms_box");
+    const elOpenTerms = document.getElementById("open_terms");
+    const elCkTerms = document.getElementById("ck_terms");
+
+    elOpenTerms.addEventListener("click", () => {
+      elTermsBox.style.display = "block";
+      elTermsBox.textContent = TERMS_TEXT;
+      elTermsBox.scrollTop = 0;
+      setStatusLines([
+        "利用規約を最後までスクロールしてください。",
+        "Please scroll the Terms to the bottom.",
+        "请将条款滚动到底部。",
+        "약관을 끝까지 스크롤해 주세요."
+      ]);
+      setDot("busy");
+    });
+
+    elTermsBox.addEventListener("scroll", () => {
+      const nearBottom = elTermsBox.scrollTop + elTermsBox.clientHeight >= elTermsBox.scrollHeight - 6;
+      if (nearBottom) {
+        elCkTerms.disabled = false;
         setDot("ok");
-        elBadge.textContent = "完了";
-        setStatus([ r.message || "完了しました。", "Done.", "完成。", "완료." ]);
-      } else {
-        setDot("bad");
-        elBadge.textContent = "エラー";
-        if (r && r.code === "DENY_NEED_PROFILE") showOverlay(true);
-        setStatus([ (r && r.message) ? r.message : "エラーが発生しました。", "Error.", "错误。", "오류." ]);
+        setStatusLines([
+          "同意チェックが有効になりました。必要事項を入力して送信してください。",
+          "Consent enabled. Fill in and submit.",
+          "已启用同意勾选。请填写并提交。",
+          "동의가 활성화되었습니다. 입력 후 제출해 주세요."
+        ]);
       }
-    } catch(e) {
-      setDot("bad");
-      elBadge.textContent = "エラー";
-      setStatus(["通信エラーまたはタイムアウトです。", "Network error/timeout.", "通信错误或超时。", "통신 오류/시간 초과."]);
-    } finally {
-      enableButtons(true);
-    }
+    });
+
+    btnModalPrimary.onclick = async () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      const f = {
+        last_name: document.getElementById("f_last"),
+        first_name: document.getElementById("f_first"),
+        last_kana: document.getElementById("f_last_kana"),
+        first_kana: document.getElementById("f_first_kana"),
+        phone: document.getElementById("f_phone"),
+        address: document.getElementById("f_addr"),
+        ck_terms: document.getElementById("ck_terms"),
+        ck_world: document.getElementById("ck_world"),
+        ck_terms_row: document.getElementById("ck_terms_row"),
+        ck_world_row: document.getElementById("ck_world_row"),
+      };
+
+      Object.values(f).forEach(el => {
+        if (el && el.classList) el.classList.remove("invalid");
+      });
+      if (f.ck_terms_row) f.ck_terms_row.classList.remove("invalid");
+      if (f.ck_world_row) f.ck_world_row.classList.remove("invalid");
+
+      const payload = {
+        last_name: f.last_name.value.trim(),
+        first_name: f.first_name.value.trim(),
+        last_kana: f.last_kana.value.trim(),
+        first_kana: f.first_kana.value.trim(),
+        phone: f.phone.value.trim(),
+        address: f.address.value.trim(),
+        consent: String(!!(f.ck_terms.checked && f.ck_world.checked))
+      };
+
+      const missing = [];
+      if (!payload.last_name) { missing.push("last_name"); f.last_name.classList.add("invalid"); }
+      if (!payload.first_name) { missing.push("first_name"); f.first_name.classList.add("invalid"); }
+      if (!payload.last_kana) { missing.push("last_kana"); f.last_kana.classList.add("invalid"); }
+      if (!payload.first_kana) { missing.push("first_kana"); f.first_kana.classList.add("invalid"); }
+      if (!payload.phone) { missing.push("phone"); f.phone.classList.add("invalid"); }
+      if (!payload.address) { missing.push("address"); f.address.classList.add("invalid"); }
+      if (f.ck_terms.disabled || !f.ck_terms.checked) { missing.push("ck_terms"); f.ck_terms_row.classList.add("invalid"); }
+      if (!f.ck_world.checked) { missing.push("ck_world"); f.ck_world_row.classList.add("invalid"); }
+
+      if (missing.length) {
+        setDot("error");
+        setStatusLines([
+          "未入力の項目があります。赤く表示された箇所を確認してください。",
+          "Some items are missing. Please check highlighted fields.",
+          "有未填写项目。请检查标红处。",
+          "미입력 항목이 있습니다. 빨간 표시를 확인해 주세요."
+        ]);
+        return;
+      }
+
+      setBusy(true);
+      elBadge.textContent = "送信中";
+      setDot("busy");
+      setStatusLines([
+        "登録を送信しています。しばらくお待ちください。",
+        "Sending registration... Please wait.",
+        "正在提交登记…请稍候。",
+        "등록 전송 중입니다. 잠시만 기다려 주세요."
+      ]);
+
+      try{
+        const res = await api_("profile_set", payload);
+        if (res && res.ok) {
+          setDot("ok");
+          elBadge.textContent = "完了";
+          setStatusLines([
+            "登録が完了しました。入店または退店を押してください。",
+            "Registration completed. Tap Check in or Check out.",
+            "登记完成。请选择进入或离开。",
+            "등록 완료. 입장 또는 퇴장을 눌러 주세요."
+          ]);
+          showOverlay(false);
+          enableButtons(true);
+        } else {
+          setDot("error");
+          elBadge.textContent = "エラー";
+          setStatusLines([
+            (res && res.message) ? res.message : "登録に失敗しました。もう一度お試しください。",
+            "Registration failed. Please try again.",
+            "登记失败。请重试。",
+            "등록에 실패했습니다. 다시 시도해 주세요."
+          ]);
+        }
+      } catch(e){
+        setDot("error");
+        elBadge.textContent = "エラー";
+        setStatusLines(I18N.netErr);
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    btnModalSecondary.onclick = () => {
+      showOverlay(false);
+      setDot("error");
+      setStatusLines([
+        "会員登録が完了していないため、入店退店はできません。",
+        "You can't proceed without registration.",
+        "未完成登记，无法继续。",
+        "등록이 완료되지 않아 진행할 수 없습니다."
+      ]);
+      enableButtons(false);
+    };
   }
 
-  async function boot(){
-    setDot("busy");
-    elBadge.textContent = "起動中";
-    setStatus(["準備しています...", "Preparing...", "准备中...", "준비 중..."]);
+  async function gateFlow(){
     enableButtons(false);
 
-    const session = getSession();
-    if (!session) {
-      loginArea.style.display = "block";
-      actionsArea.style.display = "none";
-      setDot("ok");
-      elBadge.textContent = "ログイン";
-      setStatus(["最初にLINEでログインしてください。", "Please login with LINE.", "请先用LINE登录。", "먼저 LINE으로 로그인해 주세요."]);
+    const sess = getSession_();
+    if (!sess) {
+      setDot("error");
+      elBadge.textContent = "要ログイン";
+      setStatusLines(I18N.needLogin);
+
+      showOverlay(true);
+      setModal({
+        title: "LINEログイン",
+        pill: "必須",
+        body: I18N.needLogin,
+        primary: "LINEでログイン",
+        secondary: "閉じる"
+      });
+
+      btnModalPrimary.onclick = () => {
+        location.href = loginUrl_();
+      };
+      btnModalSecondary.onclick = () => {
+        showOverlay(false);
+      };
       return;
     }
 
-    loginArea.style.display = "none";
-    actionsArea.style.display = "block";
-
-    const ok = await ensureProfile(session);
-    if (ok) {
-      showOverlay(false);
-      setDot("ok");
-      elBadge.textContent = "準備OK";
-      setStatus(["準備ができました。入店または退店を押してください。", "Ready. Tap Check in/out.", "准备就绪。请选择进入/离开。", "준비 완료. 입장/퇴장을 눌러 주세요."]);
-      enableButtons(true);
-    } else {
-      setDot("warn");
-      elBadge.textContent = "会員登録";
-      setStatus(["初回のみ会員登録が必要です。", "One-time registration required.", "首次需要登记。", "최초 1회 등록이 필요합니다."]);
+    try{
+      const st = await api_("profile_status", {});
+      if (st && st.ok && st.has_profile) {
+        showOverlay(false);
+        elBadge.textContent = "準備OK";
+        setDot("ok");
+        setStatusLines(I18N.ready);
+        enableButtons(true);
+        return;
+      }
+      renderProfileForm();
+    } catch(e){
+      if (String(e && e.message) === "NO_SESSION") {
+        localStorage.removeItem("cw_session");
+        await gateFlow();
+        return;
+      }
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.initFail);
       enableButtons(false);
     }
   }
 
-  btnLogin.addEventListener("click", () => {
-    const url = GAS_WEBAPP_URL + "?action=login&return_url=" + encodeURIComponent(RETURN_URL);
-    location.href = url;
+  async function callCheck_(op){
+    setBusy(true);
+    elBadge.textContent = "処理中";
+    setDot("busy");
+    setStatusLines([
+      "位置情報を確認しています...",
+      "Checking location...",
+      "正在确认位置…",
+      "위치를 확인 중입니다..."
+    ]);
+
+    let geo;
+    try{
+      geo = await getGeo_();
+    }catch(e){
+      setBusy(false);
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.geoDenied);
+      return;
+    }
+
+    setStatusLines([
+      "通信中です。しばらくお待ちください。",
+      "Communicating... Please wait.",
+      "正在通信…请稍候。",
+      "통신 중입니다. 잠시만 기다려 주세요."
+    ]);
+
+    try{
+      const res = await api_(op, { lat: geo.lat, lng: geo.lng });
+      if (res && res.ok){
+        elBadge.textContent = "完了";
+        setDot("ok");
+        const msgJa = res.message || "完了しました。";
+        setStatusLines([
+          msgJa,
+          "Done.",
+          "完成。",
+          "완료."
+        ]);
+      } else {
+        if (res && res.code === "DENY_NEED_PROFILE") {
+          renderProfileForm();
+          return;
+        }
+        elBadge.textContent = "エラー";
+        setDot("error");
+        const msg = (res && res.message) ? res.message : "エラーが発生しました。";
+        setStatusLines([
+          msg,
+          "An error occurred.",
+          "发生错误。",
+          "오류가 발생했습니다."
+        ]);
+      }
+    } catch(e){
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.netErr);
+    } finally{
+      setBusy(false);
+    }
+  }
+
+  function openConfirm(op){
+    showOverlay(true);
+    enableButtons(false);
+
+    const cfg = op === "check_in" ? I18N.confirmIn : I18N.confirmOut;
+    setModal(cfg);
+
+    btnModalPrimary.onclick = async () => {
+      showOverlay(false);
+      enableButtons(false);
+      await callCheck_(op);
+      enableButtons(true);
+    };
+    btnModalSecondary.onclick = () => {
+      showOverlay(false);
+      enableButtons(true);
+    };
+  }
+
+  async function init(){
+    elBadge.textContent = "起動中";
+    setDot("busy");
+    setStatusLines(I18N.boot);
+    enableButtons(false);
+
+    const sess = getSessionFromHash_();
+    if (sess) {
+      setSession_(sess);
+      clearHash_();
+    }
+
+    await gateFlow();
+  }
+
+  btnIn.addEventListener("click", () => openConfirm("check_in"));
+  btnOut.addEventListener("click", () => openConfirm("check_out"));
+
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible") {
+      await gateFlow();
+    }
   });
 
-  btnSubmit.addEventListener("click", async () => {
-    const session = getSession();
-    if (!session) return;
-    await submitProfile(session);
-    await boot();
-  });
-
-  btnClose.addEventListener("click", () => showOverlay(false));
-
-  btnIn.addEventListener("click", () => doCheck("check_in"));
-  btnOut.addEventListener("click", () => doCheck("check_out"));
-
-  boot();
+  init();
 </script>
 </body>
 </html>
