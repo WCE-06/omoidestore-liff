@@ -1,300 +1,376 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>COMPASSION WORLD 入店退店管理システム</title>
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>COMPASSION WORLD 入店退店管理システム</title>
 
-<style>
-  :root{
-    --bg:#0b0f1a; --card:#121a2b; --text:#e7ecff; --muted:#aab6da;
-    --good:#1db954; --warn:#f4c542; --bad:#ff5a6a;
-    --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.35);
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    padding:16px; background:var(--bg); color:var(--text);
-    font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;
-  }
-  .wrap{width:min(720px,100%)}
-  .card{
-    background:linear-gradient(180deg,#141d33,var(--card));
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:18px;
-  }
-  .header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;}
-  .title{margin:0; font-size:16px; line-height:1.35;}
-  .badge{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap;}
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  .status{
-    border:1px solid rgba(255,255,255,.10);
-    background:rgba(255,255,255,.04);
-    border-radius:14px;
-    padding:12px;
-    margin:12px 0 16px;
-  }
-  .statusRow{display:flex; gap:10px; align-items:flex-start;}
-  .dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn); box-shadow:0 0 0 4px rgba(244,197,66,.18);}
-  .i18n-ja{font-size:15px; font-weight:650; color:var(--text);}
-  .i18n-sub{margin-top:6px; display:grid; gap:4px;}
-  .i18n-sub div{font-size:12px; color:var(--muted);}
+  <style>
+    :root{
+      --bg:#0b0f1a;
+      --card:#121a2b;
+      --card2:#141d33;
+      --text:#e7ecff;
+      --muted:#aab6da;
+      --good:#1db954;
+      --warn:#f4c542;
+      --bad:#ff5a6a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --focus: rgba(244,197,66,.30);
+      --ring: rgba(255,90,106,.35);
+      --okring: rgba(29,185,84,.25);
+    }
 
-  .panel{display:none;}
-  .panel.show{display:block;}
+    *{box-sizing:border-box}
 
-  .notice{
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,.10);
-    background:rgba(255,255,255,.04);
-    padding:12px;
-    margin-bottom:12px;
-    line-height:1.6;
-  }
-  .noticeTitle{
-    font-size:14px;
-    color:var(--text);
-    font-weight:650;
-    white-space: pre-line;
-  }
-  .noticeBody{
-    font-size:12px;
-    color:var(--muted);
-    margin-top:8px;
-    white-space: pre-line;
-  }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;
+      background:
+        radial-gradient(1200px 700px at 30% -10%, #1a2a6c33, transparent),
+        radial-gradient(900px 500px at 120% 20%, #b21f1f22, transparent),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
 
-  form{margin:0}
-  .form{display:grid; gap:10px;}
-  .field{display:grid; gap:6px;}
-  label{font-size:12px; color:var(--muted);}
-  input, textarea{
-    width:100%;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,.14);
-    background:rgba(0,0,0,.18);
-    color:var(--text);
-    padding:12px 12px;
-    font-size:14px;
-    outline:none;
-  }
-  textarea{min-height:90px; resize:vertical;}
-  .nameGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .app{ width:min(720px, 100%); }
 
-  .agreeRow{
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    line-height:1.5;
-    color:var(--muted);
-    font-size:12px;
-    margin-top:8px;
-    padding:8px 10px;
-    border-radius:14px;
-    border:1px solid transparent;
-  }
-  .agreeRow input{width:18px; height:18px; margin-top:2px;}
-  .agreeText{flex:1;}
-  .linkBtn{
-    display:inline-block;
-    color:var(--text);
-    text-decoration:underline;
-    text-underline-offset:3px;
-    cursor:pointer;
-  }
+    .card{
+      background: linear-gradient(180deg, #141d33, var(--card));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
 
-  .actions{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
-  button{
-    appearance:none;
-    border:1px solid rgba(255,255,255,.14);
-    background:rgba(255,255,255,.06);
-    color:var(--text);
-    border-radius:16px;
-    padding:14px 12px;
-    cursor:pointer;
-  }
-  button:disabled{opacity:.55; cursor:not-allowed;}
+    .header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
 
-  .btnPrimary{border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));}
-  .btnIn{border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));}
-  .btnOut{border-color: rgba(170,182,218,.25); background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06));}
+    .title{
+      font-size:16px;
+      margin:0;
+      letter-spacing:.02em;
+      line-height:1.35;
+    }
 
-  .btnText{ text-align:center; }
-  .btnText .ja{ font-size:16px; font-weight:750; }
-  .btnText .sub{ margin-top:6px; display:grid; gap:4px; font-size:12px; color:var(--muted); line-height:1.2; }
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
 
-  .overlay{
-    position:fixed; inset:0;
-    background:rgba(0,0,0,.55);
-    backdrop-filter: blur(6px);
-    display:none;
-    align-items:center; justify-content:center;
-    padding:18px;
-    z-index:9999;
-  }
-  .overlay.show{display:flex;}
-  .modal{
-    width:min(760px, 100%);
-    border-radius:20px;
-    border:1px solid rgba(255,255,255,.14);
-    background:linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
-    box-shadow:var(--shadow);
-    padding:16px;
-  }
-  .modalTop{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
-  .modalTitle{margin:0; font-size:15px;}
-  .modalBody{margin-top:10px;}
+    .status{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      border-radius:14px;
+      padding:12px;
+      margin:12px 0 16px;
+    }
 
-  .termsBox{
-    max-height:52vh;
-    overflow:auto;
-    border-radius:14px;
-    border:1px solid rgba(255,255,255,.12);
-    background:rgba(0,0,0,.18);
-    padding:12px;
-  }
-  .termsText{
-    white-space: pre-wrap;
-    font-size:12px;
-    line-height:1.7;
-    color:var(--text);
-  }
-  .termsHint{margin-top:10px; font-size:12px; color:var(--muted);}
+    .statusRow{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+    }
 
-  .modalActions{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
-  .badgeSmall{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap;}
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      margin-top:7px;
+      background:var(--warn);
+      box-shadow:0 0 0 4px rgba(244,197,66,.18);
+      flex:0 0 auto;
+    }
 
-  .srOnly{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;}
+    .i18nBlock{ line-height:1.45; }
+    .i18n-ja{ font-size:15px; color:var(--text); font-weight:650; }
+    .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
+    .i18n-sub div{ font-size:12px; color:var(--muted); }
 
-  .errField{
-    border-color: rgba(255,90,106,.9) !important;
-    box-shadow: 0 0 0 4px rgba(255,90,106,.20) !important;
-  }
-  .errRow{
-    border-color: rgba(255,90,106,.9) !important;
-    background: rgba(255,90,106,.10) !important;
-  }
-</style>
+    .actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:16px;
+      padding:14px 12px;
+      cursor:pointer;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+      user-select:none;
+    }
+
+    button:active{ transform: translateY(1px); }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .btnText{ text-align:center; }
+    .btnText .ja{ font-size:16px; font-weight:750; }
+    .btnText .sub{
+      margin-top:6px;
+      display:grid;
+      gap:4px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.2;
+    }
+
+    .btnIn{
+      border-color: rgba(29,185,84,.35);
+      background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
+    }
+    .btnOut{
+      border-color: rgba(170,182,218,.25);
+      background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06));
+    }
+
+    .footerNote{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:9999;
+    }
+    .overlay.show{ display:flex; }
+
+    .modal{
+      width:min(640px, 100%);
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+
+    .modalTop{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      justify-content:space-between;
+    }
+    .modalTitle{ margin:0; font-size:15px; }
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .modalBody{ margin-top:10px; }
+
+    .modalActions{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .btnPrimary{
+      border-color: rgba(29,185,84,.35);
+      background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06));
+    }
+
+    .btnGhost{
+      border-color: rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+    }
+
+    .btnDanger{
+      border-color: rgba(255,90,106,.35);
+      background: linear-gradient(180deg, rgba(255,90,106,.18), rgba(255,255,255,.06));
+    }
+
+    .form{
+      margin-top:12px;
+      display:grid;
+      gap:10px;
+    }
+
+    .hintBox{
+      margin-top:10px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      line-height:1.6;
+      font-size:13px;
+    }
+
+    .field{
+      display:grid;
+      gap:6px;
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    label{ font-size:12px; color:var(--muted); }
+
+    input, textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding:12px 12px;
+      font-size:14px;
+      outline:none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    input:focus, textarea:focus{
+      border-color: rgba(244,197,66,.45);
+      box-shadow: 0 0 0 4px var(--focus);
+    }
+    textarea{ min-height: 90px; resize: vertical; }
+
+    .checkRow{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.5;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .checkRow input{
+      width:18px;
+      height:18px;
+      margin-top:2px;
+      accent-color: var(--good);
+    }
+
+    .errField input, .errField textarea{
+      border-color: rgba(255,90,106,.55);
+      box-shadow: 0 0 0 4px rgba(255,90,106,.14);
+    }
+    .errCheck{
+      border-color: rgba(255,90,106,.45);
+      box-shadow: 0 0 0 4px rgba(255,90,106,.12);
+    }
+
+    .termLinkRow{
+      margin-top:8px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .linkBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      cursor:pointer;
+      text-decoration:none;
+    }
+
+    .srOnly{
+      position:absolute; width:1px; height:1px;
+      padding:0; margin:-1px; overflow:hidden;
+      clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+
+    .divider{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 12px 0;
+      border:0;
+    }
+
+    .termsBox{
+      max-height: 44vh;
+      overflow:auto;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+      color: var(--muted);
+      line-height:1.65;
+      font-size:12px;
+      white-space:pre-wrap;
+    }
+
+    .smallNote{
+      margin-top:10px;
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.55;
+    }
+  </style>
 </head>
 
 <body>
-<main class="wrap">
-  <section class="card" aria-live="polite" aria-busy="false">
-    <div class="header">
-      <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
-      <div id="badge" class="badge">起動中</div>
-    </div>
+  <main class="app">
+    <section class="card" aria-live="polite" aria-busy="false">
+      <div class="header">
+        <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
+        <div id="badge" class="badge">起動中</div>
+      </div>
 
-    <div class="status" role="status" aria-atomic="true">
-      <div class="statusRow">
-        <div id="dot" class="dot" aria-hidden="true"></div>
-        <div>
-          <div id="statusJa" class="i18n-ja">初期化中...</div>
-          <div class="i18n-sub">
-            <div id="statusEn">Initializing...</div>
-            <div id="statusZh">正在初始化...</div>
-            <div id="statusKo">초기화 중...</div>
+      <div class="status" role="status" aria-atomic="true">
+        <div class="statusRow">
+          <div id="dot" class="dot" aria-hidden="true"></div>
+          <div class="i18nBlock">
+            <div id="statusJa" class="i18n-ja">初期化中...</div>
+            <div class="i18n-sub">
+              <div id="statusEn">Initializing...</div>
+              <div id="statusZh">正在初始化...</div>
+              <div id="statusKo">초기화 중...</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div id="panelRegister" class="panel">
-      <div class="notice">
-        <div class="noticeTitle">COMPASSION WORLDが
-平和で心地よい世界であり続けるために</div>
-        <div class="noticeBody">COMPASSION WORLDは、
-訪れるすべての方が安心して過ごせる
-平和であたたかな世界であることを大切にしています。
-その世界を守り続けるため、
-初めてご利用いただく際のみ、
-会員登録へのご協力をお願いしています。
-ご登録後は、入店・退店の操作のみで
-スムーズにご利用いただけます。</div>
-        <div class="i18n-sub" style="margin-top:8px;">
-          <div>To keep COMPASSION WORLD peaceful and welcoming, we ask for a one-time registration.</div>
-          <div>为保持COMPASSION WORLD平和舒适，首次使用需完成一次登记，感谢配合。</div>
-          <div>COMPASSION WORLD가 평화롭고 편안한 곳으로 유지될 수 있도록 최초 1회 등록에 협조 부탁드립니다.</div>
-        </div>
-      </div>
-
-      <form id="regForm" novalidate>
-        <div class="form">
-          <div class="nameGrid">
-            <div class="field">
-              <label>姓</label>
-              <input id="f_sei" type="text" autocomplete="family-name" required />
-            </div>
-            <div class="field">
-              <label>名</label>
-              <input id="f_mei" type="text" autocomplete="given-name" required />
-            </div>
-          </div>
-
-          <div class="nameGrid">
-            <div class="field">
-              <label>姓（カナ）</label>
-              <input id="f_sei_kana" type="text" inputmode="kana" required />
-            </div>
-            <div class="field">
-              <label>名（カナ）</label>
-              <input id="f_mei_kana" type="text" inputmode="kana" required />
-            </div>
-          </div>
-
-          <div class="field">
-            <label>電話番号</label>
-            <input id="f_phone" type="tel" autocomplete="tel" required />
-          </div>
-
-          <div class="field">
-            <label>住所</label>
-            <textarea id="f_address" autocomplete="street-address" required></textarea>
-          </div>
-
-          <div id="rowAgreeGate" class="agreeRow">
-            <input id="f_agree_gate" type="checkbox" disabled />
-            <div class="agreeText">
-              <div>
-                <span id="openTerms" class="linkBtn" role="button" tabindex="0">利用規約を確認する</span>
-                を開いて最後までスクロールすると、同意チェックが有効になります。
-              </div>
-              <div class="i18n-sub" style="margin-top:6px;">
-                <div>Open the Terms and scroll to the bottom to enable consent.</div>
-                <div>打开条款并滚动到底部以启用同意。</div>
-                <div>약관을 열고 끝까지 스크롤하면 동의가 활성화됩니다.</div>
-              </div>
-            </div>
-          </div>
-
-          <div id="rowConsent" class="agreeRow" style="margin-top:6px;">
-            <input id="f_consent" type="checkbox" disabled required />
-            <div class="agreeText">
-              本システムが、
-              COMPASSION WORLDの平和な世界を守るために
-              利用されることに同意します
-              <div class="i18n-sub" style="margin-top:6px;">
-                <div>I agree this system is used to keep COMPASSION WORLD peaceful and welcoming.</div>
-                <div>我同意本系统用于守护COMPASSION WORLD的平和与舒适。</div>
-                <div>본 시스템이 COMPASSION WORLD의 평화로운 환경을 지키기 위해 사용됨에 동의합니다.</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="actions">
-            <button id="btnRegSubmit" class="btnPrimary" type="button" disabled>登録を送信</button>
-            <button id="btnRegCancel" type="button" disabled>閉じる</button>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <div id="panelActions" class="panel">
-      <div class="actions">
-        <button id="btnIn" class="btnIn" disabled type="button">
+      <div id="actionsWrap" class="actions">
+        <button id="btnIn" class="btnIn" disabled>
           <div class="btnText">
             <div class="ja">入店</div>
             <div class="sub">
@@ -305,7 +381,7 @@
           </div>
         </button>
 
-        <button id="btnOut" class="btnOut" disabled type="button">
+        <button id="btnOut" class="btnOut" disabled>
           <div class="btnText">
             <div class="ja">退店</div>
             <div class="sub">
@@ -316,96 +392,161 @@
           </div>
         </button>
       </div>
-    </div>
 
-    <div class="srOnly" id="srLive" aria-live="assertive"></div>
-  </section>
-</main>
-
-<div id="overlay" class="overlay" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modalTop">
-      <div>
-        <h2 id="modalTitle" class="modalTitle">利用規約</h2>
-        <div class="i18n-sub"><div>Terms of Use</div><div>使用条款</div><div>이용 약관</div></div>
+      <div id="footerWrap" class="footerNote">
+        処理中はボタンが押せません。画面の案内に沿って操作してください。
+        <div class="i18n-sub" style="margin-top:8px;">
+          <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
+          <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
+          <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
+        </div>
       </div>
-      <div id="modalBadge" class="badgeSmall">確認してください</div>
-    </div>
+    </section>
+  </main>
 
-    <div class="modalBody">
-      <div id="termsBox" class="termsBox">
-        <div id="termsText" class="termsText"></div>
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalTop">
+        <h2 id="modalTitle" class="modalTitle">確認</h2>
+        <div id="modalPill" class="pill">案内</div>
       </div>
-      <div class="termsHint" id="termsHint">最後までスクロールすると同意チェックが有効になります。</div>
 
-      <div class="modalActions">
-        <button id="btnCloseTerms" type="button">閉じる</button>
-        <button id="btnAcknowledge" class="btnPrimary" type="button" disabled>確認しました</button>
+      <div class="modalBody">
+        <div class="i18nBlock">
+          <div id="modalJa" class="i18n-ja">確認中...</div>
+          <div class="i18n-sub">
+            <div id="modalEn">Checking...</div>
+            <div id="modalZh">正在确认...</div>
+            <div id="modalKo">확인 중...</div>
+          </div>
+        </div>
+
+        <div id="modalForm" style="display:none;"></div>
+
+        <div id="modalActions" class="modalActions">
+          <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
+          <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
+        </div>
+
+        <div class="srOnly" id="srLive" aria-live="assertive"></div>
       </div>
     </div>
   </div>
-</div>
 
 <script>
   const LIFF_ID = "2008818718-xTQWF4uO";
-  const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbzY8ZYm-telsuItGezTE1H6rEfo2Z3QcrOb9YMNA_e7coHwoAYzjXFtFU_mWOJE9TmS/exec";
 
-  const STORE_LAT = 35.9025210;
-  const STORE_LNG = 138.4435135;
-  const ALLOW_RADIUS_M = 50;
+  const GAS_EXEC_URL =
+    "https://script.google.com/macros/s/AKfycbzieYyWk17GUCQnkFU8fZT5N2shkyswLoj9r7Z72XNIstCEBRx4NwjciRs6Sj-YcAJ1r/exec";
 
-  const GEO_OPTIONS = {
-    enableHighAccuracy: true,
-    timeout: 12000,
-    maximumAge: 0
+  const OA_ID_WITH_AT = "@420taqgx";
+  const OA_ADD_FRIEND_URL = "https://line.me/R/ti/p/" + encodeURIComponent(OA_ID_WITH_AT);
+
+  const STORE = {
+    lat: 35.9025210,
+    lon: 138.4435135,
+    radiusM: 50
   };
 
-  const TERMS_VERSION = "Ver.1.0 / 2026-01-10";
-  const TERMS_TEXT =
-`COMPASSION WORLD 入店退店管理システム
-会員利用規約（${TERMS_VERSION}）
+  const TERMS = {
+    version: "2026-01-11",
+    text:
+`COMPASSION WORLDが
+平和で心地よい世界であり続けるために
 
-第1条 目的
-本規約は、COMPASSION WORLD 入店退店管理システムを利用するすべての利用者に対し、施設の安全な運営、緊急時の連絡を目的として、会員情報の取得および利用条件を定めるものです。
+COMPASSION WORLDは、
+訪れるすべての方が安心して過ごせる
+平和であたたかな世界であることを大切にしています。
+その世界を守り続けるため、
+初めてご利用いただく際のみ、
+会員登録へのご協力をお願いしています。
+ご登録後は、入店・退店の操作のみで
+スムーズにご利用いただけます。
 
-第2条 会員登録
-本システムを利用して入店または退店を行う場合、初回利用時に以下の会員情報の登録が必要となります。
-・姓
-・名
-・姓（カナ）
-・名（カナ）
-・住所
-・電話番号
-利用者は、正確かつ最新の情報を登録するものとします。
+1. 登録情報について
+初回登録では、姓・名、姓カナ・名カナ、電話番号、住所の入力が必要です。
+未精算時や緊急時のご連絡、防犯上の確認のために利用します。
 
-第3条 個人情報の利用目的
-取得した個人情報は、以下の目的の範囲内で利用します。
-・施設の入退店履歴の管理
-・緊急時における利用者への連絡
-・安心して過ごせる環境づくりのための確認
-・法令に基づく対応および手続
+2. 施設内の備品等の取扱い
+施設内の備品、設備、商品、什器等に破損・汚損・紛失等が生じた場合、
+故意・過失の有無にかかわらず、当施設が算定する実費相当額を全額ご負担いただきます。
 
-第4条 店内備品等の破損・汚損
-利用者の故意または過失、または通常の使用方法を超える利用により、店内備品、設備、商品、建物その他の物品に破損、汚損、紛失等の損害が生じた場合、当施設は、修理または交換に要する合理的な実費相当額を請求できるものとし、利用者はこれを負担します。
-通常の利用による経年劣化、通常損耗に該当するものは、原則として請求の対象外とします。
+3. 利用停止
+不正行為や安全確保上の必要がある場合、利用を停止することがあります。
 
-第5条 個人情報の管理
-取得した個人情報は、漏えい、紛失、改ざん等を防止するため、適切な安全管理措置を講じて管理します。
+4. 免責
+通信障害、端末の状態、各サービスの仕様変更等により、本システムが利用できない場合があります。
 
-第6条 個人情報の第三者提供
-以下の場合を除き、本人の同意なく第三者に提供することはありません。
-・法令に基づく場合
-・警察、裁判所等の公的機関から正当な要請を受けた場合
-・利用者または第三者の生命、身体、財産の保護のために必要な場合
+本システムが、
+COMPASSION WORLDの平和な世界を守るために
+利用されることに同意します
+`
+  };
 
-第7条 入店退店の制限
-会員登録が完了していない場合、または虚偽の情報が登録されていると判断された場合、本システムによる入店および退店をお断りすることがあります。
-
-第8条 規約の変更
-本規約は、必要に応じて予告なく変更されることがあります。変更後の規約は、本システム上に表示された時点で効力を生じます。
-
-第9条 同意の成立
-本規約は、利用者が規約内容を確認し、同意の意思表示を行ったうえで会員登録を送信した時点で成立するものとします。`;
+  const I18N = {
+    init: ["初期化中...","Initializing...","正在初始化...","초기화 중..."],
+    ready: [
+      "準備ができました。入店または退店を押してください。",
+      "Ready. Tap Check in or Check out.",
+      "准备就绪。请选择进入或离开。",
+      "준비 완료. 입장 또는 퇴장을 눌러 주세요."
+    ],
+    initFail: [
+      "初期化に失敗しました。通信環境と設定を確認してください。",
+      "Initialization failed. Check network and settings.",
+      "初始化失败。请检查网络和设置。",
+      "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
+    ],
+    tokenMissing: [
+      "認証情報を取得できませんでした。LINEを開き直してお試しください。",
+      "Could not get authentication info. Please reopen LINE and try again.",
+      "无法获取认证信息。请重新打开LINE后重试。",
+      "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
+    ],
+    netErr: [
+      "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
+      "Network error or timeout. Check your connection.",
+      "通信错误或超时。请检查网络。",
+      "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
+    ],
+    geoNeed: [
+      "現地での操作を確認できませんでした。位置情報の許可をオンにして、もう一度お試しください。",
+      "Could not verify on-site. Enable location permission and try again.",
+      "无法确认您在现场。请开启定位权限后重试。",
+      "현장 확인이 되지 않습니다. 위치 권한을 켠 뒤 다시 시도해 주세요."
+    ],
+    geoFar: (m) => ([
+      "現地からの操作のみ受け付けています。いまの距離は約 " + m + "m です。",
+      "Only on-site operation is allowed. Distance: about " + m + "m.",
+      "仅允许在现场操作。当前距离约 " + m + " 米。",
+      "현장 조작만 가능합니다. 현재 거리 약 " + m + "m 입니다."
+    ]),
+    confirmIn: {
+      title: "確認", pill: "入店",
+      body: ["入店を記録します。よろしいですか。","You are about to check in. Continue?","将记录进入。继续吗？","입장을 기록합니다. 진행할까요?"],
+      primary: "入店する", secondary: "やめる"
+    },
+    confirmOut: {
+      title: "確認", pill: "退店",
+      body: ["退店を記録します。よろしいですか。","You are about to check out. Continue?","将记录离开。继续吗？","퇴장을 기록합니다. 진행할까요?"],
+      primary: "退店する", secondary: "やめる"
+    },
+    friendGate: {
+      title: "友だち追加", pill: "初回のみ",
+      body: ["ご利用には公式LINEの友だち追加が必要です。下のボタンから追加してください。","To continue, please add our official LINE account using the button below.","继续使用前，请先通过下方按钮添加我们的官方LINE账号。","계속하려면 아래 버튼으로 공식 LINE 계정을 추가해 주세요."],
+      primary: "友だち追加を開く", secondary: "追加できたら再チェック"
+    },
+    profileGate: {
+      title: "会員情報の登録", pill: "初回のみ",
+      body: ["初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。","One-time registration is required on your first visit.","首次使用时需要进行一次登记。","최초 1회 등록이 필요합니다."],
+      primary: "登録する", secondary: "あとで"
+    },
+    termsGate: {
+      title: "利用規約", pill: "確認",
+      body: ["規約を確認し、同意にチェックしてください。","Please read the terms and check your agreement.","请阅读条款并勾选同意。","약관을 확인한 뒤 동의에 체크해 주세요."],
+      primary: "規約を開く", secondary: "閉じる"
+    }
+  };
 
   const elBadge = document.getElementById("badge");
   const elDot = document.getElementById("dot");
@@ -413,53 +554,47 @@
   const elStatusEn = document.getElementById("statusEn");
   const elStatusZh = document.getElementById("statusZh");
   const elStatusKo = document.getElementById("statusKo");
-  const srLive = document.getElementById("srLive");
-
-  const panelRegister = document.getElementById("panelRegister");
-  const panelActions = document.getElementById("panelActions");
-
-  const overlay = document.getElementById("overlay");
-  const termsBox = document.getElementById("termsBox");
-  const termsText = document.getElementById("termsText");
-  const termsHint = document.getElementById("termsHint");
-  const modalBadge = document.getElementById("modalBadge");
-  const btnCloseTerms = document.getElementById("btnCloseTerms");
-  const btnAcknowledge = document.getElementById("btnAcknowledge");
-
-  const btnRegSubmit = document.getElementById("btnRegSubmit");
-  const btnRegCancel = document.getElementById("btnRegCancel");
   const btnIn = document.getElementById("btnIn");
   const btnOut = document.getElementById("btnOut");
+  const card = document.querySelector(".card");
+  const actionsWrap = document.getElementById("actionsWrap");
+  const footerWrap = document.getElementById("footerWrap");
 
-  const rowAgreeGate = document.getElementById("rowAgreeGate");
-  const rowConsent = document.getElementById("rowConsent");
+  const overlay = document.getElementById("overlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalPill = document.getElementById("modalPill");
+  const modalJa = document.getElementById("modalJa");
+  const modalEn = document.getElementById("modalEn");
+  const modalZh = document.getElementById("modalZh");
+  const modalKo = document.getElementById("modalKo");
+  const modalForm = document.getElementById("modalForm");
+  const btnModalPrimary = document.getElementById("btnModalPrimary");
+  const btnModalSecondary = document.getElementById("btnModalSecondary");
+  const srLive = document.getElementById("srLive");
 
-  const f = {
-    sei: document.getElementById("f_sei"),
-    mei: document.getElementById("f_mei"),
-    seiKana: document.getElementById("f_sei_kana"),
-    meiKana: document.getElementById("f_mei_kana"),
-    phone: document.getElementById("f_phone"),
-    address: document.getElementById("f_address"),
-    agreeGate: document.getElementById("f_agree_gate"),
-    consent: document.getElementById("f_consent"),
-  };
-
-  let termsOpenedOnce = false;
-  let termsScrolledToBottom = false;
+  let friendPollTimer = null;
+  let lastGeoOkAt = 0;
+  let lastGeoDistM = null;
 
   function setDot(state){
     if (state === "ok") { elDot.style.background = "var(--good)"; elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)"; return; }
     if (state === "busy") { elDot.style.background = "var(--warn)"; elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)"; return; }
-    elDot.style.background = "var(--bad)"; elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)";
+    if (state === "error") { elDot.style.background = "var(--bad)"; elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)"; return; }
+    elDot.style.background = "var(--warn)";
+    elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
   }
 
-  function setStatus(ja,en,zh,ko){
-    elStatusJa.textContent = ja || "";
-    elStatusEn.textContent = en || "";
-    elStatusZh.textContent = zh || "";
-    elStatusKo.textContent = ko || "";
-    srLive.textContent = ja || "";
+  function setStatusLines(lines){
+    elStatusJa.textContent = lines[0] || "";
+    elStatusEn.textContent = lines[1] || "";
+    elStatusZh.textContent = lines[2] || "";
+    elStatusKo.textContent = lines[3] || "";
+    srLive.textContent = lines[0] || "";
+  }
+
+  function enableButtons(ready){
+    btnIn.disabled = !ready;
+    btnOut.disabled = !ready;
   }
 
   function showOverlay(show){
@@ -467,105 +602,39 @@
     overlay.setAttribute("aria-hidden", show ? "false" : "true");
   }
 
-  function showRegister(){
-    panelRegister.classList.add("show");
-    panelActions.classList.remove("show");
+  function setBusy(on){
+    card.setAttribute("aria-busy", on ? "true" : "false");
+    enableButtons(!on);
+  }
+
+  function setModal(cfg){
+    modalTitle.textContent = cfg.title || "";
+    modalPill.textContent = cfg.pill || "";
+    modalJa.textContent = (cfg.body && cfg.body[0]) || "";
+    modalEn.textContent = (cfg.body && cfg.body[1]) || "";
+    modalZh.textContent = (cfg.body && cfg.body[2]) || "";
+    modalKo.textContent = (cfg.body && cfg.body[3]) || "";
+    srLive.textContent = (cfg.body && cfg.body[0]) || "";
+    modalForm.style.display = "none";
+    modalForm.innerHTML = "";
+    btnModalPrimary.textContent = cfg.primary || "";
+    btnModalSecondary.textContent = cfg.secondary || "";
+    btnModalPrimary.disabled = false;
+    btnModalSecondary.disabled = false;
+  }
+
+  function hideActionsForRegistration(){
+    actionsWrap.style.display = "none";
+    footerWrap.style.display = "none";
+    enableButtons(false);
   }
 
   function showActions(){
-    panelRegister.classList.remove("show");
-    panelActions.classList.add("show");
+    actionsWrap.style.display = "";
+    footerWrap.style.display = "";
   }
 
-  function setBusy(on){
-    document.querySelector(".card").setAttribute("aria-busy", on ? "true" : "false");
-  }
-
-  function scrollToTopForFeedback(){
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    document.querySelector(".card").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function clearErrors(){
-    Object.values(f).forEach(el => el.classList.remove("errField"));
-    rowAgreeGate.classList.remove("errRow");
-    rowConsent.classList.remove("errRow");
-  }
-
-  function markMissing(keys){
-    clearErrors();
-    const set = new Set((keys || []).map(String));
-    if (set.has("sei")) f.sei.classList.add("errField");
-    if (set.has("mei")) f.mei.classList.add("errField");
-    if (set.has("sei_kana")) f.seiKana.classList.add("errField");
-    if (set.has("mei_kana")) f.meiKana.classList.add("errField");
-    if (set.has("phone")) f.phone.classList.add("errField");
-    if (set.has("address")) f.address.classList.add("errField");
-    if (set.has("terms_version")) rowAgreeGate.classList.add("errRow");
-    if (set.has("consent")) rowConsent.classList.add("errRow");
-    if (set.has("geofence")) rowConsent.classList.add("errRow");
-  }
-
-  function updateRegisterButtons(){
-    const filled =
-      f.sei.value.trim() &&
-      f.mei.value.trim() &&
-      f.seiKana.value.trim() &&
-      f.meiKana.value.trim() &&
-      f.phone.value.trim() &&
-      f.address.value.trim();
-    btnRegSubmit.disabled = !(filled && f.consent.checked);
-    btnRegCancel.disabled = false;
-  }
-
-  function openTerms(){
-    termsOpenedOnce = true;
-    termsText.textContent = TERMS_TEXT;
-    termsBox.scrollTop = 0;
-    btnAcknowledge.disabled = true;
-    modalBadge.textContent = "最後までスクロールしてください";
-    termsHint.textContent = "最後までスクロールすると同意チェックが有効になります。";
-    showOverlay(true);
-  }
-
-  function closeTerms(){
-    showOverlay(false);
-  }
-
-  termsBox.addEventListener("scroll", () => {
-    const nearBottom = (termsBox.scrollTop + termsBox.clientHeight) >= (termsBox.scrollHeight - 8);
-    if (nearBottom) {
-      termsScrolledToBottom = true;
-      btnAcknowledge.disabled = false;
-      modalBadge.textContent = "確認できます";
-      termsHint.textContent = "確認しました を押すと同意チェックが有効になります。";
-    }
-  });
-
-  btnAcknowledge.addEventListener("click", () => {
-    if (!(termsOpenedOnce && termsScrolledToBottom)) return;
-    f.agreeGate.disabled = false;
-    f.agreeGate.checked = true;
-    f.consent.disabled = false;
-    updateRegisterButtons();
-    closeTerms();
-    clearErrors();
-  });
-
-  btnCloseTerms.addEventListener("click", closeTerms);
-  document.getElementById("openTerms").addEventListener("click", openTerms);
-  document.getElementById("openTerms").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openTerms(); }
-  });
-
-  f.consent.addEventListener("change", updateRegisterButtons);
-  Object.values(f).forEach(el => {
-    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
-      el.addEventListener("input", () => { updateRegisterButtons(); clearErrors(); });
-    }
-  });
-
-  function jsonp(url){
+  function jsonp(url) {
     return new Promise((resolve, reject) => {
       const cb = "cb_" + Math.random().toString(36).slice(2);
       window[cb] = (data) => { cleanup(); resolve(data); };
@@ -573,377 +642,551 @@
       const script = document.createElement("script");
       const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 20000);
 
-      function cleanup(){
+      function cleanup() {
         clearTimeout(timer);
         if (script.parentNode) script.parentNode.removeChild(script);
         delete window[cb];
       }
 
       const sep = url.includes("?") ? "&" : "?";
-      script.src = url + sep + "callback=" + encodeURIComponent(cb) + "&t=" + Date.now();
-      script.onerror = () => { cleanup(); reject(new Error("loaderror")); };
+      script.src = url + sep + "callback=" + encodeURIComponent(cb);
+      script.onerror = () => { cleanup(); reject(new Error("load error")); };
 
       document.body.appendChild(script);
     });
   }
 
+  async function checkFriendshipOnce(){
+    try{
+      const r = await liff.getFriendship();
+      return !!(r && r.friendFlag);
+    } catch(e){
+      return null;
+    }
+  }
+
+  async function checkProfileStatus(){
+    const idToken = liff.getIDToken();
+    if (!idToken) return { ok:false };
+    const url = GAS_EXEC_URL + "?action=profile_status&id_token=" + encodeURIComponent(idToken) + "&t=" + Date.now();
+    return await jsonp(url);
+  }
+
+  function startFriendPoll(){
+    if (friendPollTimer) clearInterval(friendPollTimer);
+    friendPollTimer = setInterval(async () => {
+      const friend = await checkFriendshipOnce();
+      if (friend === true) {
+        clearInterval(friendPollTimer);
+        friendPollTimer = null;
+        await gateFlow();
+      }
+    }, 1500);
+  }
+
   function toRad(d){ return d * Math.PI / 180; }
 
-  function distanceMeters(lat1, lon1, lat2, lon2){
+  function haversineM(lat1, lon1, lat2, lon2){
     const R = 6371e3;
-    const φ1 = toRad(lat1), φ2 = toRad(lat2);
-    const Δφ = toRad(lat2 - lat1);
-    const Δλ = toRad(lon2 - lon1);
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const p1 = toRad(lat1);
+    const p2 = toRad(lat2);
+    const dp = toRad(lat2 - lat1);
+    const dl = toRad(lon2 - lon1);
+    const a = Math.sin(dp/2) * Math.sin(dp/2) +
+              Math.cos(p1) * Math.cos(p2) *
+              Math.sin(dl/2) * Math.sin(dl/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
 
-  function getCurrentPositionAsync(){
+  function getGeoOnce(){
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new Error("geolocation_not_supported"));
+        reject(new Error("no geolocation"));
         return;
       }
-      navigator.geolocation.getCurrentPosition(resolve, reject, GEO_OPTIONS);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve(pos),
+        (err) => reject(err),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 }
+      );
     });
   }
 
-  async function ensureInsideGeofence(){
+  async function verifyOnSite(){
     try{
-      const pos = await getCurrentPositionAsync();
+      const pos = await getGeoOnce();
       const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const acc = pos.coords.accuracy;
-
-      const d = distanceMeters(lat, lng, STORE_LAT, STORE_LNG);
-
-      if (Number.isFinite(d) && d <= ALLOW_RADIUS_M) return { ok:true, distance_m: Math.round(d), accuracy_m: Math.round(acc) };
-
-      return { ok:false, code:"OUT_OF_RANGE", distance_m: Math.round(d), accuracy_m: Math.round(acc) };
+      const lon = pos.coords.longitude;
+      const dist = haversineM(lat, lon, STORE.lat, STORE.lon);
+      lastGeoDistM = dist;
+      if (dist <= STORE.radiusM) {
+        lastGeoOkAt = Date.now();
+        return { ok:true, distM: dist };
+      }
+      return { ok:false, distM: dist };
     } catch(e){
-      return { ok:false, code:"GEO_FAIL" };
+      return { ok:false, distM: null, err: e };
     }
   }
 
-  async function profileStatus(){
-    const idToken = liff.getIDToken();
-    if (!idToken) return { ok:false, code:"NO_IDTOKEN" };
-    const url = GAS_EXEC_URL + "?action=profile_status&id_token=" + encodeURIComponent(idToken);
-    return await jsonp(url);
+  function withinRecentGeoOk(){
+    return (Date.now() - lastGeoOkAt) <= 120000;
   }
 
-  async function gate(){
-    btnIn.disabled = true;
-    btnOut.disabled = true;
-    btnRegSubmit.disabled = true;
-    btnRegCancel.disabled = true;
-
-    const idToken = liff.getIDToken();
-    if (!idToken){
-      elBadge.textContent = "エラー";
-      setDot("error");
-      setStatus(
-        "認証情報を取得できませんでした。LINEを開き直してお試しください。",
-        "Could not get authentication info. Please reopen LINE and try again.",
-        "无法获取认证信息。请重新打开LINE后重试。",
-        "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
-      );
-      showRegister();
-      btnRegCancel.disabled = false;
-      return;
-    }
-
-    const st = await profileStatus();
-    if (st && st.ok && st.has_profile){
-      elBadge.textContent = "準備OK";
-      setDot("ok");
-      setStatus(
-        "準備ができました。入店または退店を押してください。",
-        "Ready. Tap Check in or Check out.",
-        "准备就绪。请选择进入或离开。",
-        "준비 완료. 입장 또는 퇴장을 눌러 주세요."
-      );
-      showActions();
-      btnIn.disabled = false;
-      btnOut.disabled = false;
-      return;
-    }
-
-    elBadge.textContent = "登録が必要です";
-    setDot("busy");
-    setStatus(
-      "初回のみ、会員情報の登録が必要です。利用規約を確認して登録してください。",
-      "Registration is required for first-time use.",
-      "首次需要登记。请确认条款后完成注册。",
-      "최초 1회 등록이 필요합니다. 약관 확인 후 등록해 주세요."
-    );
-    showRegister();
-    btnRegCancel.disabled = false;
-    updateRegisterButtons();
-  }
-
-  btnRegCancel.addEventListener("click", () => {
-    setDot("error");
-    elBadge.textContent = "未登録";
-    setStatus(
-      "会員情報の登録が完了していないため、入店退店はできません。",
-      "You can't proceed without registration.",
-      "未完成登记，无法继续。",
-      "등록이 완료되지 않아 진행할 수 없습니다."
-    );
-  });
-
-  function clientValidate(){
-    clearErrors();
-
-    const missing = [];
-    if (!f.sei.value.trim()) missing.push("sei");
-    if (!f.mei.value.trim()) missing.push("mei");
-    if (!f.seiKana.value.trim()) missing.push("sei_kana");
-    if (!f.meiKana.value.trim()) missing.push("mei_kana");
-    if (!f.phone.value.trim()) missing.push("phone");
-    if (!f.address.value.trim()) missing.push("address");
-    if (!(termsOpenedOnce && termsScrolledToBottom)) missing.push("terms_version");
-    if (!f.consent.checked) missing.push("consent");
-
-    if (missing.length){
-      markMissing(missing);
-      return { ok:false, missing };
-    }
-    return { ok:true, missing:[] };
-  }
-
-  btnRegSubmit.addEventListener("click", async () => {
-    scrollToTopForFeedback();
-
-    const v = clientValidate();
-    if (!v.ok){
-      elBadge.textContent = "エラー";
-      setDot("error");
-      setStatus(
-        "未入力の項目があります。すべて入力し、同意にチェックしてください。",
-        "Please complete all required fields and consent.",
-        "请填写所有必填项并勾选同意。",
-        "필수 항목을 모두 입력하고 동의에 체크해 주세요."
-      );
-      return;
-    }
+  async function gateFlow(){
+    enableButtons(false);
 
     setBusy(true);
-    elBadge.textContent = "位置確認中";
+    elBadge.textContent = "確認中";
     setDot("busy");
-    setStatus(
-      "現地確認のため、位置情報を確認しています。",
-      "Checking location...",
-      "正在确认位置...",
-      "위치를 확인 중입니다..."
-    );
+    setStatusLines(["確認中...", "Checking...", "正在确认...", "확인 중..."]);
 
-    const geo = await ensureInsideGeofence();
-    if (!geo.ok){
+    const geo = await verifyOnSite();
+    if (!geo.ok) {
       setBusy(false);
-      elBadge.textContent = "エラー";
+      elBadge.textContent = "現地確認";
       setDot("error");
-
-      if (geo.code === "OUT_OF_RANGE"){
-        markMissing(["geofence"]);
-        setStatus(
-          "現地からの操作のみ可能です。入口付近で再度お試しください。",
-          "This action is only available near the store. Please try again on-site.",
-          "仅限在店铺附近操作。请到店附近重试。",
-          "현장(매장 근처)에서만 가능합니다. 매장 근처에서 다시 시도해 주세요."
-        );
+      if (geo.distM == null) {
+        setStatusLines(I18N.geoNeed);
       } else {
-        setStatus(
-          "位置情報を取得できませんでした。位置情報の許可をオンにして再度お試しください。",
-          "Could not get location. Please allow location permission and try again.",
-          "无法获取位置。请允许位置权限后重试。",
-          "위치 정보를 가져올 수 없습니다. 위치 권한을 허용한 뒤 다시 시도해 주세요."
-        );
+        setStatusLines(I18N.geoFar(Math.round(geo.distM)));
       }
+      showOverlay(false);
       return;
     }
 
-    const idToken = liff.getIDToken();
-    if (!idToken) { setBusy(false); await gate(); return; }
+    const friend = await checkFriendshipOnce();
+    if (friend !== true) {
+      setBusy(false);
+      showOverlay(true);
+      setModal(I18N.friendGate);
+      btnModalPrimary.onclick = async () => {
+        try{ await liff.openWindow({ url: OA_ADD_FRIEND_URL, external: true }); }
+        catch(e){ window.open(OA_ADD_FRIEND_URL, "_blank"); }
+        startFriendPoll();
+      };
+      btnModalSecondary.onclick = async () => { await gateFlow(); };
+      startFriendPoll();
+      return;
+    }
 
-    elBadge.textContent = "送信中";
-    setDot("busy");
-    setStatus("送信中です。しばらくお待ちください。","Sending...","发送中...","전송 중...");
+    const prof = await checkProfileStatus();
+    if (!(prof && prof.ok && prof.has_profile)) {
+      setBusy(false);
+      showOverlay(true);
+      renderProfileForm();
+      return;
+    }
 
-    try{
-      const url =
-        GAS_EXEC_URL +
-        "?action=profile_set" +
-        "&id_token=" + encodeURIComponent(idToken) +
-        "&sei=" + encodeURIComponent(f.sei.value.trim()) +
-        "&mei=" + encodeURIComponent(f.mei.value.trim()) +
-        "&sei_kana=" + encodeURIComponent(f.seiKana.value.trim()) +
-        "&mei_kana=" + encodeURIComponent(f.meiKana.value.trim()) +
-        "&phone=" + encodeURIComponent(f.phone.value.trim()) +
-        "&address=" + encodeURIComponent(f.address.value.trim()) +
-        "&consent=" + encodeURIComponent("true") +
-        "&terms_version=" + encodeURIComponent(TERMS_VERSION) +
-        "&geo_lat=" + encodeURIComponent(String(STORE_LAT)) +
-        "&geo_lng=" + encodeURIComponent(String(STORE_LNG)) +
-        "&geo_radius_m=" + encodeURIComponent(String(ALLOW_RADIUS_M)) +
-        "&device_lat=" + encodeURIComponent(String(geo.distance_m)) +
-        "&ua=" + encodeURIComponent(navigator.userAgent || "");
+    showOverlay(false);
+    showActions();
+    elBadge.textContent = "準備OK";
+    setBusy(false);
+    setDot("ok");
+    setStatusLines(I18N.ready);
+    enableButtons(true);
+  }
 
-      const res = await jsonp(url);
+  function renderTermsModal(){
+    showOverlay(true);
+    modalTitle.textContent = "利用規約";
+    modalPill.textContent = "確認";
+    modalJa.textContent = "規約を確認してください。";
+    modalEn.textContent = "Please read the terms.";
+    modalZh.textContent = "请阅读条款。";
+    modalKo.textContent = "약관을 확인해 주세요.";
 
-      if (res && res.ok){
-        elBadge.textContent = "完了";
-        setDot("ok");
-        setStatus(
-          "登録が完了しました。入店または退店を押してください。",
-          "Registration completed.",
-          "登记完成。",
-          "등록 완료."
-        );
-        clearErrors();
-        await gate();
-      } else {
-        elBadge.textContent = "エラー";
+    modalForm.style.display = "block";
+    modalForm.innerHTML = `
+      <div class="termsBox" id="termsBox">${escapeHtml_(TERMS.text)}</div>
+      <div class="smallNote">
+        版: ${escapeHtml_(TERMS.version)}
+      </div>
+    `;
+
+    btnModalPrimary.textContent = "閉じる";
+    btnModalSecondary.textContent = "閉じる";
+    btnModalPrimary.disabled = false;
+    btnModalSecondary.disabled = false;
+    btnModalPrimary.onclick = () => showOverlay(false);
+    btnModalSecondary.onclick = () => showOverlay(false);
+  }
+
+  function escapeHtml_(s){
+    return String(s || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;")
+      .replaceAll("\n","<br/>");
+  }
+
+  function renderProfileForm(){
+    hideActionsForRegistration();
+
+    modalTitle.textContent = "会員情報の登録";
+    modalPill.textContent = "初回のみ";
+    modalJa.textContent = I18N.profileGate.body[0];
+    modalEn.textContent = I18N.profileGate.body[1];
+    modalZh.textContent = I18N.profileGate.body[2];
+    modalKo.textContent = I18N.profileGate.body[3];
+
+    btnModalPrimary.textContent = "登録を送信";
+    btnModalSecondary.textContent = "閉じる";
+    btnModalPrimary.disabled = false;
+    btnModalSecondary.disabled = false;
+
+    modalForm.style.display = "block";
+    modalForm.innerHTML = `
+      <div class="hintBox">
+        COMPASSION WORLDが<br>
+        平和で心地よい世界であり続けるために<br><br>
+        COMPASSION WORLDは、訪れるすべての方が安心して過ごせる平和であたたかな世界であることを大切にしています。<br>
+        その世界を守り続けるため、初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。<br>
+        ご登録後は、入店・退店の操作のみでスムーズにご利用いただけます。
+      </div>
+
+      <hr class="divider"/>
+
+      <div class="form">
+        <div class="row2">
+          <div class="field" id="wrap_sei">
+            <label>姓</label>
+            <input id="f_sei" type="text" placeholder="例 山田" autocomplete="family-name" />
+          </div>
+          <div class="field" id="wrap_mei">
+            <label>名</label>
+            <input id="f_mei" type="text" placeholder="例 太郎" autocomplete="given-name" />
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field" id="wrap_sei_kana">
+            <label>姓（カナ）</label>
+            <input id="f_sei_kana" type="text" placeholder="例 ヤマダ" inputmode="kana" />
+          </div>
+          <div class="field" id="wrap_mei_kana">
+            <label>名（カナ）</label>
+            <input id="f_mei_kana" type="text" placeholder="例 タロウ" inputmode="kana" />
+          </div>
+        </div>
+
+        <div class="field" id="wrap_phone">
+          <label>電話番号</label>
+          <input id="f_phone" type="tel" placeholder="例 09012345678" autocomplete="tel" />
+        </div>
+
+        <div class="field" id="wrap_addr">
+          <label>住所</label>
+          <textarea id="f_addr" placeholder="例 山梨県北杜市..."></textarea>
+        </div>
+
+        <div class="termLinkRow">
+          <a class="linkBtn" href="javascript:void(0)" id="btnOpenTerms">利用規約を開く</a>
+          <span class="smallNote">版: ${escapeHtml_(TERMS.version)}</span>
+        </div>
+
+        <div class="checkRow" id="wrap_consent">
+          <input id="f_consent" type="checkbox" />
+          <div>
+            本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
+            <div class="i18n-sub" style="margin-top:6px;">
+              <div>I agree that this system is used to keep COMPASSION WORLD peaceful and comfortable.</div>
+              <div>我同意本系统用于守护COMPASSION WORLD的和平与舒适。</div>
+              <div>본 시스템이 COMPASSION WORLD의 평화롭고 편안한 환경을 지키기 위해 사용되는 것에 동의합니다.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="smallNote">
+          同意チェックの前に、一度は利用規約を開いて確認してください。
+        </div>
+      </div>
+    `;
+
+    const btnOpenTerms = document.getElementById("btnOpenTerms");
+    btnOpenTerms.onclick = () => renderTermsModal();
+
+    let termsOpenedOnce = false;
+    btnOpenTerms.addEventListener("click", () => { termsOpenedOnce = true; });
+
+    btnModalPrimary.onclick = async () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      const sei = document.getElementById("f_sei").value.trim();
+      const mei = document.getElementById("f_mei").value.trim();
+      const seiKana = document.getElementById("f_sei_kana").value.trim();
+      const meiKana = document.getElementById("f_mei_kana").value.trim();
+      const phone = document.getElementById("f_phone").value.trim();
+      const address = document.getElementById("f_addr").value.trim();
+      const consent = document.getElementById("f_consent").checked;
+
+      clearErrors_();
+
+      const missing = [];
+      if (!sei) missing.push("sei");
+      if (!mei) missing.push("mei");
+      if (!seiKana) missing.push("sei_kana");
+      if (!meiKana) missing.push("mei_kana");
+      if (!phone) missing.push("phone");
+      if (!address) missing.push("address");
+      if (!consent) missing.push("consent");
+      if (!termsOpenedOnce) missing.push("terms_opened");
+
+      if (missing.length) {
+        markErrors_(missing);
         setDot("error");
-        if (res && res.code === "MISSING_FIELDS" && Array.isArray(res.missing)) {
-          markMissing(res.missing);
+        setStatusLines([
+          "未入力の項目があります。該当箇所を確認してください。",
+          "Some fields are missing. Please check highlighted items.",
+          "有未填写项目。请确认标记位置。",
+          "미입력 항목이 있습니다. 표시된 항목을 확인해 주세요."
+        ]);
+        return;
+      }
+
+      if (!withinRecentGeoOk()) {
+        const geo = await verifyOnSite();
+        if (!geo.ok) {
+          setDot("error");
+          if (geo.distM == null) setStatusLines(I18N.geoNeed);
+          else setStatusLines(I18N.geoFar(Math.round(geo.distM)));
+          return;
         }
-        setStatus(
-          (res && res.message) ? res.message : "登録に失敗しました。",
-          "Registration failed.",
-          "登记失败。",
-          "등록 실패."
-        );
       }
-    } catch(e){
-      elBadge.textContent = "エラー";
+
+      const idToken = liff.getIDToken();
+      if (!idToken) {
+        setDot("error");
+        setStatusLines(I18N.tokenMissing);
+        return;
+      }
+
+      setBusy(true);
+      elBadge.textContent = "送信中";
+      setDot("busy");
+
+      try{
+        const url =
+          GAS_EXEC_URL +
+          "?action=profile_set" +
+          "&id_token=" + encodeURIComponent(idToken) +
+          "&sei=" + encodeURIComponent(sei) +
+          "&mei=" + encodeURIComponent(mei) +
+          "&sei_kana=" + encodeURIComponent(seiKana) +
+          "&mei_kana=" + encodeURIComponent(meiKana) +
+          "&phone=" + encodeURIComponent(phone) +
+          "&address=" + encodeURIComponent(address) +
+          "&consent=" + encodeURIComponent(String(consent)) +
+          "&terms_version=" + encodeURIComponent(TERMS.version) +
+          "&ua=" + encodeURIComponent(navigator.userAgent || "") +
+          "&t=" + Date.now();
+
+        const res = await jsonp(url);
+        if (res && res.ok) {
+          setDot("ok");
+          setStatusLines([
+            "登録が完了しました。入店または退店へ進みます。",
+            "Registration completed. Proceeding to check in/out.",
+            "登记完成。将进入入店/退店页面。",
+            "등록 완료. 입장/퇴장 화면으로 이동합니다."
+          ]);
+          showOverlay(false);
+          showActions();
+          await gateFlow();
+        } else {
+          if (res && res.code === "MISSING_FIELDS" && Array.isArray(res.missing)) {
+            markErrorsFromServer_(res.missing);
+          }
+          setDot("error");
+          setStatusLines([
+            (res && res.message) ? res.message : "登録に失敗しました。もう一度お試しください。",
+            "Registration failed. Please try again.",
+            "登记失败。请重试。",
+            "등록에 실패했습니다. 다시 시도해 주세요."
+          ]);
+        }
+      } catch(e){
+        setDot("error");
+        setStatusLines(I18N.netErr);
+      } finally {
+        setBusy(false);
+        elBadge.textContent = "準備中";
+      }
+    };
+
+    btnModalSecondary.onclick = () => {
+      showOverlay(false);
       setDot("error");
-      setStatus(
-        "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
-        "Network error or timeout.",
-        "通信错误或超时。",
-        "통신 오류 또는 시간 초과."
-      );
-    } finally {
-      setBusy(false);
+      setStatusLines([
+        "会員情報の登録が完了していないため、入店退店はできません。",
+        "You can't proceed without registration.",
+        "未完成登记，无法继续。",
+        "등록이 완료되지 않아 진행할 수 없습니다."
+      ]);
+      enableButtons(false);
+    };
+
+    function clearErrors_(){
+      ["wrap_sei","wrap_mei","wrap_sei_kana","wrap_mei_kana","wrap_phone","wrap_addr"].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("errField");
+      });
+      const c = document.getElementById("wrap_consent");
+      if (c) c.classList.remove("errCheck");
+      const t = document.getElementById("btnOpenTerms");
+      if (t) t.style.boxShadow = "";
+      if (t) t.style.borderColor = "";
     }
-  });
 
-  async function callAction(action){
-    const idToken = liff.getIDToken();
-    if (!idToken) { await gate(); return; }
+    function markErrors_(missing){
+      if (missing.includes("sei")) document.getElementById("wrap_sei")?.classList.add("errField");
+      if (missing.includes("mei")) document.getElementById("wrap_mei")?.classList.add("errField");
+      if (missing.includes("sei_kana")) document.getElementById("wrap_sei_kana")?.classList.add("errField");
+      if (missing.includes("mei_kana")) document.getElementById("wrap_mei_kana")?.classList.add("errField");
+      if (missing.includes("phone")) document.getElementById("wrap_phone")?.classList.add("errField");
+      if (missing.includes("address")) document.getElementById("wrap_addr")?.classList.add("errField");
+      if (missing.includes("consent")) document.getElementById("wrap_consent")?.classList.add("errCheck");
+      if (missing.includes("terms_opened")) {
+        const t = document.getElementById("btnOpenTerms");
+        if (t) {
+          t.style.borderColor = "rgba(255,90,106,.55)";
+          t.style.boxShadow = "0 0 0 4px rgba(255,90,106,.14)";
+        }
+      }
+    }
 
+    function markErrorsFromServer_(missingKeys){
+      const m = new Set(missingKeys.map(x => String(x)));
+      markErrors_([
+        m.has("sei") ? "sei" : null,
+        m.has("mei") ? "mei" : null,
+        m.has("sei_kana") ? "sei_kana" : null,
+        m.has("mei_kana") ? "mei_kana" : null,
+        m.has("phone") ? "phone" : null,
+        m.has("address") ? "address" : null,
+        m.has("consent") ? "consent" : null
+      ].filter(Boolean));
+    }
+  }
+
+  async function callGAS(action){
     setBusy(true);
-    elBadge.textContent = "位置確認中";
-    setDot("busy");
-    setStatus(
-      "現地確認のため、位置情報を確認しています。",
-      "Checking location...",
-      "正在确认位置...",
-      "위치를 확인 중입니다..."
-    );
-
-    const geo = await ensureInsideGeofence();
-    if (!geo.ok){
-      setBusy(false);
-      elBadge.textContent = "エラー";
-      setDot("error");
-
-      if (geo.code === "OUT_OF_RANGE"){
-        setStatus(
-          "現地からの操作のみ可能です。入口付近で再度お試しください。",
-          "This action is only available near the store. Please try again on-site.",
-          "仅限在店铺附近操作。请到店附近重试。",
-          "현장(매장 근처)에서만 가능합니다. 매장 근처에서 다시 시도해 주세요."
-        );
-      } else {
-        setStatus(
-          "位置情報を取得できませんでした。位置情報の許可をオンにして再度お試しください。",
-          "Could not get location. Please allow location permission and try again.",
-          "无法获取位置。请允许位置权限后重试。",
-          "위치 정보를 가져올 수 없습니다. 위치 권한을 허용한 뒤 다시 시도해 주세요."
-        );
-      }
-      return;
-    }
-
     elBadge.textContent = "処理中";
     setDot("busy");
-    setStatus("通信中です。しばらくお待ちください。","Communicating...","正在通信...","통신 중...");
+    setStatusLines([
+      "通信中です。しばらくお待ちください。",
+      "Communicating... Please wait.",
+      "正在通信…请稍候。",
+      "통신 중입니다. 잠시만 기다려 주세요."
+    ]);
+
+    if (!withinRecentGeoOk()) {
+      const geo = await verifyOnSite();
+      if (!geo.ok) {
+        setBusy(false);
+        elBadge.textContent = "現地確認";
+        setDot("error");
+        if (geo.distM == null) setStatusLines(I18N.geoNeed);
+        else setStatusLines(I18N.geoFar(Math.round(geo.distM)));
+        return;
+      }
+    }
+
+    const idToken = liff.getIDToken();
+    if (!idToken) {
+      setBusy(false);
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.tokenMissing);
+      return;
+    }
 
     try{
-      const url =
-        GAS_EXEC_URL +
-        "?action=" + encodeURIComponent(action) +
-        "&id_token=" + encodeURIComponent(idToken) +
-        "&store_lat=" + encodeURIComponent(String(STORE_LAT)) +
-        "&store_lng=" + encodeURIComponent(String(STORE_LNG)) +
-        "&radius_m=" + encodeURIComponent(String(ALLOW_RADIUS_M));
-
+      const url = GAS_EXEC_URL + "?action=" + encodeURIComponent(action) + "&id_token=" + encodeURIComponent(idToken) + "&t=" + Date.now();
       const res = await jsonp(url);
+
       if (res && res.ok){
         elBadge.textContent = "完了";
         setDot("ok");
-        setStatus(
-          res.message || "完了しました。",
-          "Done.",
-          "完成。",
-          "완료."
-        );
-      } else if (res && res.code === "DENY_NEED_PROFILE") {
-        await gate();
+        const msgJa = res.message || "完了しました。";
+        setStatusLines([
+          msgJa,
+          "Please operate the door now. Watch your step.",
+          "请打开门并通过。请注意脚下的台阶。",
+          "문을 열고 지나가 주세요. 단차에 주의하세요."
+        ]);
       } else {
+        if (res && res.code === "DENY_NEED_PROFILE") {
+          showOverlay(true);
+          renderProfileForm();
+          return;
+        }
         elBadge.textContent = "エラー";
         setDot("error");
-        setStatus(
-          (res && res.message) ? res.message : "エラーが発生しました。",
-          "Error.",
-          "错误。",
-          "오류."
-        );
+        const msg = (res && res.message) ? res.message : "エラーが発生しました。";
+        setStatusLines([
+          msg + " もう一度お試しください。",
+          "An error occurred. Please try again.",
+          "发生错误。请重试。",
+          "오류가 발생했습니다. 다시 시도해 주세요."
+        ]);
       }
     } catch(e){
       elBadge.textContent = "エラー";
       setDot("error");
-      setStatus(
-        "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
-        "Network error or timeout.",
-        "通信错误或超时。",
-        "통신 오류 또는 시간 초과."
-      );
-    } finally {
+      setStatusLines(I18N.netErr);
+    } finally{
       setBusy(false);
     }
   }
 
-  btnIn.addEventListener("click", () => callAction("in"));
-  btnOut.addEventListener("click", () => callAction("out"));
+  function openConfirm(action){
+    showOverlay(true);
+    enableButtons(false);
+
+    const cfg = action === "in" ? I18N.confirmIn : I18N.confirmOut;
+    setModal(cfg);
+
+    btnModalPrimary.onclick = async () => {
+      showOverlay(false);
+      enableButtons(false);
+      await callGAS(action);
+      enableButtons(true);
+    };
+    btnModalSecondary.onclick = () => {
+      showOverlay(false);
+      enableButtons(true);
+    };
+  }
 
   async function init(){
     elBadge.textContent = "起動中";
     setDot("busy");
-    setStatus("初期化中...","Initializing...","正在初始化...","초기화 중...");
-
-    btnRegCancel.disabled = false;
+    setStatusLines(I18N.init);
+    enableButtons(false);
 
     try{
       await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
-      await gate();
-    } catch(e){
+      await gateFlow();
+    }catch(e){
       elBadge.textContent = "エラー";
       setDot("error");
-      setStatus(
-        "初期化に失敗しました。通信環境と設定を確認してください。",
-        "Initialization failed. Check network and settings.",
-        "初始化失败。请检查网络和设置。",
-        "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
-      );
+      setStatusLines(I18N.initFail);
+      enableButtons(false);
     }
   }
+
+  btnIn.addEventListener("click", () => openConfirm("in"));
+  btnOut.addEventListener("click", () => openConfirm("out"));
+
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible") {
+      await gateFlow();
+    }
+  });
 
   init();
 </script>
