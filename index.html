@@ -1,135 +1,315 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>COMPASSION WORLD 入店退店管理システム</title>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
 :root{
   --bg:#0b0f1a; --card:#121a2b; --text:#e7ecff; --muted:#aab6da;
   --ok:#1db954; --warn:#f4c542; --err:#ff5a6a;
-  --line:rgba(255,255,255,.15); --radius:16px;
+  --line:rgba(255,255,255,.15); --radius:18px;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
 body{
-  margin:0; font-family:system-ui,"Noto Sans JP",sans-serif;
-  background:var(--bg); color:var(--text);
-  min-height:100vh; display:flex; justify-content:center; align-items:center;
+  margin:0;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Arial,sans-serif;
+  background:
+    radial-gradient(1200px 700px at 30% -10%, #1a2a6c33, transparent),
+    radial-gradient(900px 500px at 120% 20%, #b21f1f22, transparent),
+    var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  padding:16px;
 }
-.app{width:min(720px,100%); padding:16px}
+.app{ width:min(720px, 100%); }
 .card{
-  background:var(--card); border-radius:var(--radius);
-  padding:20px; border:1px solid var(--line);
+  background: linear-gradient(180deg, #141d33, var(--card));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+  padding: 18px;
 }
-h1{font-size:16px;margin:0 0 12px}
-.status{font-size:14px;margin-bottom:16px}
-.hidden{display:none}
+.header{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;}
+.title{font-size:16px; margin:0; letter-spacing:.02em; line-height:1.35;}
+.badge{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap;}
 
-label{font-size:12px;color:var(--muted)}
-input,textarea{
-  width:100%; padding:10px; border-radius:12px;
-  border:1px solid var(--line); background:#0003; color:var(--text)
-}
-textarea{min-height:80px}
-.field{margin-bottom:10px}
-.field.error input,.field.error textarea{
-  border-color:var(--err); box-shadow:0 0 0 2px #ff5a6a44
-}
+.status{border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); border-radius:14px; padding:12px; margin:12px 0 16px;}
+.statusRow{display:flex; align-items:flex-start; gap:10px;}
+.dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn); box-shadow:0 0 0 4px rgba(244,197,66,.18); flex:0 0 auto;}
+.i18nBlock{ line-height:1.45; }
+.i18n-ja{ font-size:15px; color:var(--text); font-weight:650; }
+.i18n-sub{ margin-top:6px; display:grid; gap:4px; }
+.i18n-sub div{ font-size:12px; color:var(--muted); }
 
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hidden{ display:none !important; }
 
+.actions{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 button{
-  width:100%; padding:14px; border-radius:14px;
-  border:1px solid var(--line); background:#fff1; color:var(--text);
-  cursor:pointer; font-size:14px
+  appearance:none; border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  border-radius:16px;
+  padding:14px 12px;
+  cursor:pointer;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
+  user-select:none;
 }
-button.primary{background:#1db95433;border-color:#1db954}
-button:disabled{opacity:.5;cursor:not-allowed}
+button:active{ transform: translateY(1px); }
+button:disabled{ opacity:.55; cursor:not-allowed; }
 
-.checkRow{
-  border:1px solid var(--line); padding:10px; border-radius:12px;
-  display:flex; gap:8px; font-size:12px; margin-top:10px
-}
-.checkRow.error{border-color:var(--err)}
-.checkRow input{margin-top:2px}
+.btnText{ text-align:center; }
+.btnText .ja{ font-size:16px; font-weight:750; }
+.btnText .sub{ margin-top:6px; display:grid; gap:4px; font-size:12px; color:var(--muted); line-height:1.2; }
 
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.btnIn{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
+.btnOut{ border-color: rgba(170,182,218,.25); background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06)); }
+
+.footerNote{ margin-top:14px; color:var(--muted); font-size:12px; line-height:1.5; }
 
 .overlay{
-  position:fixed; inset:0; background:#0008;
-  display:none; justify-content:center; align-items:center; padding:16px
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+  display:none;
+  align-items:center; justify-content:center;
+  padding:18px;
+  z-index:9999;
 }
-.overlay.show{display:flex}
+.overlay.show{ display:flex; }
+
 .modal{
-  background:var(--card); padding:16px; border-radius:16px;
-  max-height:80vh; overflow:auto; border:1px solid var(--line)
+  width:min(600px, 100%);
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.14);
+  background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
+  box-shadow: var(--shadow);
+  padding:16px;
 }
-.modal h2{font-size:14px;margin-top:0}
+.modalTop{ display:flex; align-items:center; gap:12px; justify-content:space-between; }
+.modalTitle{ margin:0; font-size:15px; }
+.pill{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap; }
+.modalBody{ margin-top:10px; }
+
+.modalActions{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:14px; }
+.btnPrimary{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
+.btnGhost{ border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.05); }
+
+.form{
+  margin-top:12px;
+  display:grid;
+  gap:10px;
+}
+.grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.field{ display:grid; gap:6px; }
+label{ font-size:12px; color:var(--muted); }
+input, textarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  color: var(--text);
+  padding:12px 12px;
+  font-size:14px;
+  outline:none;
+}
+textarea{ min-height: 90px; resize: vertical; }
+
+.field.err input, .field.err textarea{
+  border-color: rgba(255,90,106,.9);
+  box-shadow: 0 0 0 3px rgba(255,90,106,.18);
+}
+
+.checkRow{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  font-size:12px;
+  color: var(--muted);
+  line-height:1.6;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  padding:10px;
+}
+.checkRow.err{
+  border-color: rgba(255,90,106,.9);
+  box-shadow: 0 0 0 3px rgba(255,90,106,.14);
+}
+.checkRow input{ width:18px; height:18px; margin-top:2px; }
+
+.linkBtn{
+  display:inline-block;
+  margin-top:8px;
+  font-size:12px;
+  color:var(--text);
+  border:1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.05);
+  padding:8px 10px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+.srOnly{
+  position:absolute; width:1px; height:1px;
+  padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
 </style>
 </head>
 
 <body>
-<div class="app">
-  <div class="card">
-    <h1>COMPASSION WORLD 入店退店管理システム</h1>
-    <div id="status" class="status">初期化中…</div>
+<main class="app">
+  <section class="card" aria-live="polite" aria-busy="false">
+    <div class="header">
+      <h1 class="title">COMPASSION WORLD 入店退店管理システム</h1>
+      <div id="badge" class="badge">起動中</div>
+    </div>
 
-    <!-- 会員登録 -->
-    <div id="reg">
-      <p style="font-size:13px;line-height:1.7">
-COMPASSION WORLDが<br>
-平和で心地よい世界であり続けるために<br><br>
-初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。
-      </p>
-
-      <div class="row2">
-        <div class="field" id="w_ln"><label>姓</label><input id="ln"></div>
-        <div class="field" id="w_fn"><label>名</label><input id="fn"></div>
-      </div>
-
-      <div class="row2">
-        <div class="field" id="w_lk"><label>セイ</label><input id="lk"></div>
-        <div class="field" id="w_fk"><label>メイ</label><input id="fk"></div>
-      </div>
-
-      <div class="row2">
-        <div class="field" id="w_dob"><label>生年月日</label><input id="dob" type="date"></div>
-        <div class="field" id="w_ph"><label>電話番号</label><input id="ph"></div>
-      </div>
-
-      <div class="field" id="w_ad"><label>住所</label><textarea id="ad"></textarea></div>
-
-      <div class="checkRow" id="termsRow">
-        <input type="checkbox" id="agree" disabled>
-        <div>
-          本システムが COMPASSION WORLD の平和な世界を守るために利用されることに同意します<br>
-          <span id="openTerms" style="text-decoration:underline;cursor:pointer">利用規約を表示</span>
+    <div class="status" role="status" aria-atomic="true">
+      <div class="statusRow">
+        <div id="dot" class="dot" aria-hidden="true"></div>
+        <div class="i18nBlock">
+          <div id="statusJa" class="i18n-ja">初期化中...</div>
+          <div class="i18n-sub">
+            <div id="statusEn">Initializing...</div>
+            <div id="statusZh">正在初始化...</div>
+            <div id="statusKo">초기화 중...</div>
+          </div>
         </div>
-      </div>
-
-      <div class="actions">
-        <button id="send" class="primary" disabled>登録を送信</button>
-        <button id="clear">クリア</button>
       </div>
     </div>
 
-    <!-- 入退店 -->
-    <div id="io" class="hidden">
-      <div class="actions">
-        <button id="in" class="primary">入店</button>
-        <button id="out">退店</button>
+    <div id="ioArea" class="actions hidden">
+      <button id="btnIn" class="btnIn" disabled>
+        <div class="btnText">
+          <div class="ja">入店</div>
+          <div class="sub">
+            <div>Check in</div>
+            <div>进入</div>
+            <div>입장</div>
+          </div>
+        </div>
+      </button>
+
+      <button id="btnOut" class="btnOut" disabled>
+        <div class="btnText">
+          <div class="ja">退店</div>
+          <div class="sub">
+            <div>Check out</div>
+            <div>离开</div>
+            <div>퇴장</div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <div id="regHint" class="footerNote hidden">
+      初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。
+      <div class="i18n-sub" style="margin-top:8px;">
+        <div>One-time registration is required on your first visit.</div>
+        <div>首次使用需要登记。</div>
+        <div>최초 1회 등록이 필요합니다.</div>
       </div>
+    </div>
+
+    <div id="ioHint" class="footerNote hidden">
+      処理中はボタンが押せません。画面の案内に沿って操作してください。
+      <div class="i18n-sub" style="margin-top:8px;">
+        <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
+        <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
+        <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="overlay" class="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modalTop">
+      <h2 id="modalTitle" class="modalTitle">確認</h2>
+      <div id="modalPill" class="pill">案内</div>
+    </div>
+
+    <div class="modalBody">
+      <div class="i18nBlock">
+        <div id="modalJa" class="i18n-ja">確認中...</div>
+        <div class="i18n-sub">
+          <div id="modalEn">Checking...</div>
+          <div id="modalZh">正在确认...</div>
+          <div id="modalKo">확인 중...</div>
+        </div>
+      </div>
+
+      <div id="modalForm" style="display:none;"></div>
+
+      <div id="modalActions" class="modalActions">
+        <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
+        <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
+      </div>
+
+      <div class="srOnly" id="srLive" aria-live="assertive"></div>
     </div>
   </div>
 </div>
 
-<!-- 規約 -->
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h2>利用規約</h2>
-    <pre style="white-space:pre-wrap;font-size:12px;line-height:1.7">
-第1条 目的
+<script>
+const LIFF_ID = "2008818718-fOO0L9iV";
+const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbzbu1TRotcgjS0beSRhZqYIznvSgbyMZ0UpsQZ9Pgw5uUGkO6Smf9HdP1O-cLqLnvvz/exec";
+
+const I18N = {
+  ready: [
+    "準備ができました。入店または退店を押してください。",
+    "Ready. Tap Check in or Check out.",
+    "准备就绪。请选择进入或离开。",
+    "준비 완료. 입장 또는 퇴장을 눌러 주세요."
+  ],
+  initFail: [
+    "初期化に失敗しました。通信環境と設定を確認してください。",
+    "Initialization failed. Check network and settings.",
+    "初始化失败。请检查网络和设置。",
+    "초기화에 실패했습니다. 네트워크와 설정을 확인해 주세요."
+  ],
+  tokenMissing: [
+    "認証情報を取得できませんでした。LINEを開き直してお試しください。",
+    "Could not get authentication info. Please reopen LINE and try again.",
+    "无法获取认证信息。请重新打开LINE后重试。",
+    "인증 정보를 가져올 수 없습니다. LINE을 다시 열고 시도해 주세요."
+  ],
+  netErr: [
+    "通信エラーまたはタイムアウトです。電波状況を確認してお試しください。",
+    "Network error or timeout. Check your connection.",
+    "通信错误或超时。请检查网络。",
+    "통신 오류 또는 시간 초과. 네트워크를 확인해 주세요."
+  ],
+  confirmIn: {
+    title: "確認", pill: "入店",
+    body: ["入店を記録します。よろしいですか。","You are about to check in. Continue?","将记录进入。继续吗？","입장을 기록합니다. 진행할까요?"],
+    primary: "入店する", secondary: "やめる"
+  },
+  confirmOut: {
+    title: "確認", pill: "退店",
+    body: ["退店を記録します。よろしいですか。","You are about to check out. Continue?","将记录离开。继续吗？","퇴장을 기록합니다. 진행할까요?"],
+    primary: "退店する", secondary: "やめる"
+  },
+  profileGate: {
+    title: "会員登録", pill: "初回のみ",
+    body: [
+      "COMPASSION WORLDが平和で心地よい世界であり続けるために、初回のみ会員登録へのご協力をお願いします。",
+      "To keep COMPASSION WORLD peaceful and comfortable, we ask for one-time registration.",
+      "为了让COMPASSION WORLD保持平和舒适，我们请求首次登记。",
+      "COMPASSION WORLD가 평화롭고 편안한 곳으로 계속되도록 최초 1회 등록을 부탁드립니다."
+    ],
+    primary: "登録を送信", secondary: "閉じる"
+  },
+  termsTitle: "利用規約",
+};
+
+const TERMS_TEXT = `第1条 目的
 本規約は、COMPASSION WORLD 入店退店管理システムを利用するすべての利用者に対し、施設の安全な運営、緊急時の連絡を目的として、会員情報の取得および利用条件を定めるものです。
 
 第2条 会員登録
@@ -138,7 +318,6 @@ COMPASSION WORLDが<br>
 ・名
 ・姓（カナ）
 ・名（カナ）
-・生年月日      
 ・住所
 ・電話番号
 利用者は、正確かつ最新の情報を登録するものとします。
@@ -171,75 +350,444 @@ COMPASSION WORLDが<br>
 
 第9条 同意の成立
 本規約は、利用者が規約内容を確認し、同意の意思表示を行ったうえで会員登録を送信した時点で成立するものとします。
+`;
 
-    </pre>
-    <button id="okTerms" class="primary">確認しました</button>
-  </div>
-</div>
+const elBadge = document.getElementById("badge");
+const elDot = document.getElementById("dot");
+const elStatusJa = document.getElementById("statusJa");
+const elStatusEn = document.getElementById("statusEn");
+const elStatusZh = document.getElementById("statusZh");
+const elStatusKo = document.getElementById("statusKo");
 
-<script>
-const GAS = "https://script.google.com/macros/s/AKfycbw7kdVIexHvoXqW_abWxBxUZgP13k4Zkt5DnVXwih8wkpTc1xRZFALdjaa31JQVPvz6/exec";
+const ioArea = document.getElementById("ioArea");
+const regHint = document.getElementById("regHint");
+const ioHint = document.getElementById("ioHint");
 
-const uid = (() => {
-  let k = localStorage.getItem("cw_user_key");
-  if(!k){ k="u_"+Math.random().toString(36).slice(2); localStorage.setItem("cw_user_key",k);}
-  return k;
-})();
+const btnIn = document.getElementById("btnIn");
+const btnOut = document.getElementById("btnOut");
+const card = document.querySelector(".card");
 
-function jsonp(url){
-  return new Promise((res,rej)=>{
-    const cb="cb_"+Math.random().toString(36).slice(2);
-    window[cb]=d=>{delete window[cb];s.remove();res(d)};
-    const s=document.createElement("script");
-    s.src=url+"&callback="+cb;
-    s.onerror=()=>rej();
-    document.body.appendChild(s);
+const overlay = document.getElementById("overlay");
+const modalTitle = document.getElementById("modalTitle");
+const modalPill = document.getElementById("modalPill");
+const modalJa = document.getElementById("modalJa");
+const modalEn = document.getElementById("modalEn");
+const modalZh = document.getElementById("modalZh");
+const modalKo = document.getElementById("modalKo");
+const modalForm = document.getElementById("modalForm");
+const btnModalPrimary = document.getElementById("btnModalPrimary");
+const btnModalSecondary = document.getElementById("btnModalSecondary");
+const srLive = document.getElementById("srLive");
+
+let idToken = "";
+
+function setDot(state){
+  if (state === "ok") { elDot.style.background = "var(--ok)"; elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)"; return; }
+  if (state === "busy") { elDot.style.background = "var(--warn)"; elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)"; return; }
+  if (state === "error") { elDot.style.background = "var(--err)"; elDot.style.boxShadow = "0 0 0 4px rgba(255,90,106,.18)"; return; }
+  elDot.style.background = "var(--warn)";
+  elDot.style.boxShadow = "0 0 0 4px rgba(244,197,66,.18)";
+}
+
+function setStatusLines(lines){
+  elStatusJa.textContent = lines[0] || "";
+  elStatusEn.textContent = lines[1] || "";
+  elStatusZh.textContent = lines[2] || "";
+  elStatusKo.textContent = lines[3] || "";
+  srLive.textContent = lines[0] || "";
+}
+
+function enableButtons(ready){
+  btnIn.disabled = !ready;
+  btnOut.disabled = !ready;
+}
+
+function showOverlay(show){
+  overlay.classList.toggle("show", !!show);
+  overlay.setAttribute("aria-hidden", show ? "false" : "true");
+}
+
+function setBusy(on){
+  card.setAttribute("aria-busy", on ? "true" : "false");
+  enableButtons(!on);
+}
+
+function setModal(cfg){
+  modalTitle.textContent = cfg.title || "";
+  modalPill.textContent = cfg.pill || "";
+  modalJa.textContent = (cfg.body && cfg.body[0]) || "";
+  modalEn.textContent = (cfg.body && cfg.body[1]) || "";
+  modalZh.textContent = (cfg.body && cfg.body[2]) || "";
+  modalKo.textContent = (cfg.body && cfg.body[3]) || "";
+  srLive.textContent = (cfg.body && cfg.body[0]) || "";
+  btnModalPrimary.textContent = cfg.primary || "";
+  btnModalSecondary.textContent = cfg.secondary || "";
+  btnModalPrimary.disabled = false;
+  btnModalSecondary.disabled = false;
+  modalForm.style.display = "none";
+  modalForm.innerHTML = "";
+}
+
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    window[cb] = (data) => { cleanup(); resolve(data); };
+
+    const script = document.createElement("script");
+    const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 20000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      delete window[cb];
+    }
+
+    const sep = url.includes("?") ? "&" : "?";
+    script.src = url + sep + "callback=" + encodeURIComponent(cb);
+    script.onerror = () => { cleanup(); reject(new Error("load error")); };
+
+    document.body.appendChild(script);
   });
+}
+
+async function gasCall(action, paramsObj){
+  if (!idToken) return { ok:false, code:"NO_TOKEN", message:I18N.tokenMissing[0] };
+
+  const p = new URLSearchParams();
+  p.set("action", action);
+  p.set("id_token", idToken);
+  p.set("t", String(Date.now()));
+  if (paramsObj) {
+    for (const k of Object.keys(paramsObj)) p.set(k, String(paramsObj[k]));
+  }
+  const url = GAS_EXEC_URL + "?" + p.toString();
+  return await jsonp(url);
+}
+
+async function ensureProfileOrShowForm(){
+  const st = await gasCall("profile_status");
+  if (st && st.ok && st.has_profile) {
+    showOverlay(false);
+    ioArea.classList.remove("hidden");
+    regHint.classList.add("hidden");
+    ioHint.classList.remove("hidden");
+    elBadge.textContent = "準備OK";
+    setDot("ok");
+    setStatusLines(I18N.ready);
+    enableButtons(true);
+    return true;
+  }
+
+  ioArea.classList.add("hidden");
+  regHint.classList.remove("hidden");
+  ioHint.classList.add("hidden");
+  showOverlay(true);
+  renderProfileForm();
+  return false;
+}
+
+function renderProfileForm(){
+  modalTitle.textContent = I18N.profileGate.title;
+  modalPill.textContent = I18N.profileGate.pill;
+  modalJa.textContent = I18N.profileGate.body[0];
+  modalEn.textContent = I18N.profileGate.body[1];
+  modalZh.textContent = I18N.profileGate.body[2];
+  modalKo.textContent = I18N.profileGate.body[3];
+
+  btnModalPrimary.textContent = "登録を送信";
+  btnModalSecondary.textContent = "閉じる";
+  btnModalPrimary.disabled = false;
+  btnModalSecondary.disabled = false;
+
+  modalForm.style.display = "block";
+  modalForm.innerHTML = `
+    <div class="form">
+      <div class="grid2">
+        <div class="field" id="w_last">
+          <label>姓</label>
+          <input id="f_last" type="text" autocomplete="family-name" />
+        </div>
+        <div class="field" id="w_first">
+          <label>名</label>
+          <input id="f_first" type="text" autocomplete="given-name" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field" id="w_last_kana">
+          <label>セイ</label>
+          <input id="f_last_kana" type="text" inputmode="kana" />
+        </div>
+        <div class="field" id="w_first_kana">
+          <label>メイ</label>
+          <input id="f_first_kana" type="text" inputmode="kana" />
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field" id="w_dob">
+          <label>生年月日</label>
+          <input id="f_dob" type="date" />
+        </div>
+        <div class="field" id="w_phone">
+          <label>電話番号</label>
+          <input id="f_phone" type="tel" autocomplete="tel" />
+        </div>
+      </div>
+
+      <div class="field" id="w_addr">
+        <label>住所</label>
+        <textarea id="f_addr"></textarea>
+      </div>
+
+      <div class="checkRow" id="w_consent">
+        <input id="f_consent" type="checkbox" disabled />
+        <div>
+          本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
+          <div class="linkBtn" id="openTermsBtn">利用規約を表示する</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const openTermsBtn = document.getElementById("openTermsBtn");
+  openTermsBtn.addEventListener("click", () => openTermsPopup_());
+
+  btnModalPrimary.onclick = async () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    const last = document.getElementById("f_last").value.trim();
+    const first = document.getElementById("f_first").value.trim();
+    const lastKana = document.getElementById("f_last_kana").value.trim();
+    const firstKana = document.getElementById("f_first_kana").value.trim();
+    const dob = document.getElementById("f_dob").value.trim();
+    const phone = document.getElementById("f_phone").value.trim();
+    const addr = document.getElementById("f_addr").value.trim();
+    const consent = document.getElementById("f_consent").checked;
+
+    const fields = [
+      ["w_last", !!last],
+      ["w_first", !!first],
+      ["w_last_kana", !!lastKana],
+      ["w_first_kana", !!firstKana],
+      ["w_dob", !!dob],
+      ["w_phone", !!phone],
+      ["w_addr", !!addr],
+    ];
+    for (const [wrap, ok] of fields) {
+      document.getElementById(wrap).classList.toggle("err", !ok);
+    }
+    document.getElementById("w_consent").classList.toggle("err", !consent);
+
+    if (!last || !first || !lastKana || !firstKana || !dob || !phone || !addr || !consent) {
+      setDot("error");
+      setStatusLines([
+        "未入力の項目があります。未入力欄が赤く表示されます。",
+        "Some fields are missing. Missing fields are highlighted in red.",
+        "有未填写项目。未填写项将以红色标示。",
+        "미입력 항목이 있습니다. 미입력 항목이 빨간색으로 표시됩니다."
+      ]);
+      return;
+    }
+
+    setBusy(true);
+    elBadge.textContent = "送信中";
+    setDot("busy");
+
+    try{
+      const res = await gasCall("profile_set", {
+        last_name: last,
+        first_name: first,
+        last_kana: lastKana,
+        first_kana: firstKana,
+        dob: dob,
+        phone: phone,
+        address: addr,
+        consent: "true"
+      });
+
+      if (res && res.ok) {
+        setDot("ok");
+        setStatusLines([
+          "登録が完了しました。続けて入店または退店を操作できます。",
+          "Registration completed. You can now check in or check out.",
+          "登记完成。现在可以进入或离开。",
+          "등록 완료. 이제 입장 또는 퇴장을 할 수 있습니다."
+        ]);
+        showOverlay(false);
+        await ensureProfileOrShowForm();
+      } else {
+        setDot("error");
+        setStatusLines([
+          (res && res.message) ? res.message : "登録に失敗しました。もう一度お試しください。",
+          "Registration failed. Please try again.",
+          "登记失败。请重试。",
+          "등록에 실패했습니다. 다시 시도해 주세요."
+        ]);
+      }
+    } catch(e){
+      setDot("error");
+      setStatusLines(I18N.netErr);
+    } finally {
+      setBusy(false);
+      elBadge.textContent = "準備中";
+    }
+  };
+
+  btnModalSecondary.onclick = () => {
+    showOverlay(false);
+    setDot("error");
+    setStatusLines([
+      "会員登録が完了していないため、入店退店はできません。",
+      "You can't proceed without registration.",
+      "未完成登记，无法继续。",
+      "등록이 완료되지 않아 진행할 수 없습니다."
+    ]);
+    enableButtons(false);
+  };
+}
+
+function openTermsPopup_(){
+  const cfg = {
+    title: I18N.termsTitle,
+    pill: "確認",
+    body: ["利用規約を確認してください。", "Please review the terms.", "请阅读条款。", "약관을 확인해 주세요."],
+    primary: "確認しました",
+    secondary: "閉じる"
+  };
+  setModal(cfg);
+
+  modalForm.style.display = "block";
+  modalForm.innerHTML = `
+    <div class="form">
+      <div class="field">
+        <label>利用規約</label>
+        <textarea readonly style="min-height:220px; white-space:pre-wrap;">${escapeHtml_(TERMS_TEXT)}</textarea>
+      </div>
+    </div>
+  `;
+
+  btnModalPrimary.onclick = () => {
+    const c = document.getElementById("f_consent");
+    if (c) {
+      c.disabled = false;
+      c.checked = true;
+    }
+    showOverlay(true);
+    renderProfileForm();
+  };
+  btnModalSecondary.onclick = () => {
+    showOverlay(true);
+    renderProfileForm();
+  };
+}
+
+function escapeHtml_(s){
+  return String(s || "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;");
+}
+
+async function callActionWithConfirm(action){
+  showOverlay(true);
+  enableButtons(false);
+
+  const cfg = action === "check_in" ? I18N.confirmIn : I18N.confirmOut;
+  setModal(cfg);
+
+  btnModalPrimary.onclick = async () => {
+    showOverlay(false);
+    enableButtons(false);
+    setBusy(true);
+    elBadge.textContent = "処理中";
+    setDot("busy");
+    setStatusLines([
+      "通信中です。しばらくお待ちください。",
+      "Communicating... Please wait.",
+      "正在通信…请稍候。",
+      "통신 중입니다. 잠시만 기다려 주세요."
+    ]);
+
+    try{
+      const res = await gasCall(action);
+      if (res && res.ok) {
+        elBadge.textContent = "完了";
+        setDot("ok");
+        setStatusLines([
+          res.message || "完了しました。",
+          "Please operate the door now. Watch your step.",
+          "请打开门并通过。请注意脚下的台阶。",
+          "문을 열고 지나가 주세요. 단차에 주의하세요."
+        ]);
+      } else {
+        elBadge.textContent = "エラー";
+        setDot("error");
+        setStatusLines([
+          (res && res.message) ? (res.message + " もう一度お試しください。") : "エラーが発生しました。もう一度お試しください。",
+          "An error occurred. Please try again.",
+          "发生错误。请重试。",
+          "오류가 발생했습니다. 다시 시도해 주세요."
+        ]);
+      }
+    } catch(e){
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.netErr);
+    } finally{
+      setBusy(false);
+      enableButtons(true);
+    }
+  };
+
+  btnModalSecondary.onclick = () => {
+    showOverlay(false);
+    enableButtons(true);
+  };
 }
 
 async function init(){
-  const r=await jsonp(`${GAS}?action=profile_status&user_key=${uid}`);
-  if(r.ok && r.has_profile){
-    reg.classList.add("hidden"); io.classList.remove("hidden");
-    status.textContent="準備完了";
-  }else{
-    status.textContent="会員登録をお願いします";
+  elBadge.textContent = "起動中";
+  setDot("busy");
+  setStatusLines(["初期化中...", "Initializing...", "正在初始化...", "초기화 중..."]);
+  enableButtons(false);
+
+  try{
+    await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+    idToken = liff.getIDToken() || "";
+    if (!idToken) {
+      elBadge.textContent = "エラー";
+      setDot("error");
+      setStatusLines(I18N.tokenMissing);
+      return;
+    }
+
+    await ensureProfileOrShowForm();
+  }catch(e){
+    elBadge.textContent = "エラー";
+    setDot("error");
+    setStatusLines(I18N.initFail);
+    enableButtons(false);
   }
 }
 
-send.onclick=async()=>{
-  const data={
-    ln:ln.value, fn:fn.value, lk:lk.value, fk:fk.value,
-    dob:dob.value, ph:ph.value, ad:ad.value, agree:agree.checked
-  };
-  const miss=[];
-  [["ln","w_ln"],["fn","w_fn"],["lk","w_lk"],["fk","w_fk"],["dob","w_dob"],["ph","w_ph"],["ad","w_ad"]]
-    .forEach(([k,w])=>{document.getElementById(w).classList.toggle("error",!data[k]); if(!data[k])miss.push(k)});
-  termsRow.classList.toggle("error",!data.agree);
-  if(miss.length||!data.agree)return;
+btnIn.addEventListener("click", () => callActionWithConfirm("check_in"));
+btnOut.addEventListener("click", () => callActionWithConfirm("check_out"));
 
-  status.textContent="登録中…";
-  const q=new URLSearchParams({
-    action:"profile_set", user_key:uid,
-    last_name:data.ln, first_name:data.fn,
-    last_kana:data.lk, first_kana:data.fk,
-    dob:data.dob, phone:data.ph, address:data.ad,
-    consent:"true"
-  });
-  const r=await jsonp(`${GAS}?${q}`);
-  if(r.ok){ reg.classList.add("hidden"); io.classList.remove("hidden"); status.textContent="登録完了"; }
-};
-
-in.onclick=()=>jsonp(`${GAS}?action=check_in&user_key=${uid}`).then(r=>status.textContent=r.message);
-out.onclick=()=>jsonp(`${GAS}?action=check_out&user_key=${uid}`).then(r=>status.textContent=r.message);
-
-openTerms.onclick=()=>overlay.classList.add("show");
-okTerms.onclick=()=>{
-  overlay.classList.remove("show");
-  agree.disabled=false; agree.checked=true; send.disabled=false;
-};
-
-clear.onclick=()=>location.reload();
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState === "visible") {
+    try{
+      if (window.liff && liff.isLoggedIn()) {
+        idToken = liff.getIDToken() || idToken;
+      }
+      await ensureProfileOrShowForm();
+    } catch(e){}
+  }
+});
 
 init();
 </script>
