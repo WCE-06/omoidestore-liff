@@ -529,10 +529,17 @@ async function ensureProfileOrShowForm(){
 
 function renderProfileForm(){
   setModal({
-    title: "会員登録",
-    pill: "初回のみ",
+    title: "COMPASSION WORLDが平和で心地よい世界であり続けるために",
+    pill: "初回会員登録",
     body: [
-      "初回のみ、会員登録へのご協力をお願いします。",
+      "COMPASSION WORLDは、
+訪れるすべての方が安心して過ごせる
+平和であたたかな世界であることを大切にしています。
+その世界を守り続けるため、
+初めてご利用いただく際のみ、
+会員登録へのご協力をお願いしています。
+ご登録後は、入店・退店の操作のみで
+スムーズにご利用いただけます。",
       "One-time registration is required.",
       "首次需要登记。",
       "최초 1회 등록이 필요합니다."
@@ -586,6 +593,8 @@ function renderProfileForm(){
         <input id="f_consent" type="checkbox" ${termsAccepted ? "" : "disabled"} ${termsAccepted ? "checked" : ""} />
         <div>
           本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
+
+        
           <div class="linkBtn" id="openTermsBtn">利用規約を表示する</div>
         </div>
       </div>
