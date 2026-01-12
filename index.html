@@ -43,9 +43,9 @@ body{
 .statusRow{display:flex; align-items:flex-start; gap:10px;}
 .dot{width:10px; height:10px; border-radius:999px; margin-top:7px; background:var(--warn); box-shadow:0 0 0 4px rgba(244,197,66,.18); flex:0 0 auto;}
 .i18nBlock{ line-height:1.45; }
-.i18n-ja{ font-size:15px; color:var(--text); font-weight:650; }
+.i18n-ja{ font-size:15px; color:var(--text); font-weight:650; white-space:pre-line; }
 .i18n-sub{ margin-top:6px; display:grid; gap:4px; }
-.i18n-sub div{ font-size:12px; color:var(--muted); }
+.i18n-sub div{ font-size:12px; color:var(--muted); white-space:pre-line; }
 
 .hidden{ display:none !important; }
 
@@ -70,7 +70,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .btnIn{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
 .btnOut{ border-color: rgba(170,182,218,.25); background: linear-gradient(180deg, rgba(170,182,218,.14), rgba(255,255,255,.06)); }
 
-.footerNote{ margin-top:14px; color:var(--muted); font-size:12px; line-height:1.5; }
+.footerNote{ margin-top:14px; color:var(--muted); font-size:12px; line-height:1.6; white-space:pre-line; }
 
 .overlay{
   position:fixed; inset:0;
@@ -84,7 +84,7 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .overlay.show{ display:flex; }
 
 .modal{
-  width:min(600px, 100%);
+  width:min(640px, 100%);
   border-radius:20px;
   border:1px solid rgba(255,255,255,.14);
   background: linear-gradient(180deg, rgba(20,29,51,.95), rgba(18,26,43,.95));
@@ -94,17 +94,20 @@ button:disabled{ opacity:.55; cursor:not-allowed; }
 .modalTop{ display:flex; align-items:center; gap:12px; justify-content:space-between; }
 .modalTitle{ margin:0; font-size:15px; }
 .pill{ font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:var(--muted); background:rgba(255,255,255,.04); white-space:nowrap; }
-.modalBody{ margin-top:10px; }
+
+/* ここが重要: モーダル本文をスクロール可能にする */
+.modalBody{
+  margin-top:10px;
+  max-height: 72vh;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 .modalActions{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:14px; }
 .btnPrimary{ border-color: rgba(29,185,84,.35); background: linear-gradient(180deg, rgba(29,185,84,.22), rgba(255,255,255,.06)); }
 .btnGhost{ border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.05); }
 
-.form{
-  margin-top:12px;
-  display:grid;
-  gap:10px;
-}
+.form{ margin-top:12px; display:grid; gap:10px; }
 .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
 .field{ display:grid; gap:6px; }
 label{ font-size:12px; color:var(--muted); }
@@ -152,6 +155,20 @@ textarea{ min-height: 90px; resize: vertical; }
   padding:8px 10px;
   border-radius:12px;
   cursor:pointer;
+}
+
+.termsBox{
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:14px;
+  background: rgba(0,0,0,.16);
+  padding:12px;
+  white-space:pre-wrap;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--muted);
+  max-height: 56vh;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .srOnly{
@@ -209,21 +226,24 @@ textarea{ min-height: 90px; resize: vertical; }
     </div>
 
     <div id="regHint" class="footerNote hidden">
-      初めてご利用いただく際のみ、会員登録へのご協力をお願いしています。
-      <div class="i18n-sub" style="margin-top:8px;">
-        <div>One-time registration is required on your first visit.</div>
-        <div>首次使用需要登记。</div>
-        <div>최초 1회 등록이 필요합니다.</div>
-      </div>
+COMPASSION WORLDが
+平和で心地よい世界であり続けるために
+
+COMPASSION WORLDは、
+訪れるすべての方が安心して過ごせる
+平和であたたかな世界であることを大切にしています。
+その世界を守り続けるため、
+初めてご利用いただく際のみ、
+会員登録へのご協力をお願いしています。
+ご登録後は、入店・退店の操作のみで
+スムーズにご利用いただけます。
     </div>
 
     <div id="ioHint" class="footerNote hidden">
-      処理中はボタンが押せません。画面の案内に沿って操作してください。
-      <div class="i18n-sub" style="margin-top:8px;">
-        <div>Buttons are disabled during processing. Please follow the on-screen instructions.</div>
-        <div>处理过程中按钮不可用。请按照屏幕提示操作。</div>
-        <div>처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.</div>
-      </div>
+処理中はボタンが押せません。画面の案内に沿って操作してください。
+Buttons are disabled during processing. Please follow the on-screen instructions.
+处理过程中按钮不可用。请按照屏幕提示操作。
+처리 중에는 버튼을 사용할 수 없습니다. 화면 안내에 따라 주세요.
     </div>
   </section>
 </main>
@@ -247,12 +267,28 @@ textarea{ min-height: 90px; resize: vertical; }
 
       <div id="modalForm" style="display:none;"></div>
 
-      <div id="modalActions" class="modalActions">
+      <div class="modalActions">
         <button id="btnModalPrimary" class="btnPrimary" disabled>...</button>
         <button id="btnModalSecondary" class="btnGhost" disabled>...</button>
       </div>
 
       <div class="srOnly" id="srLive" aria-live="assertive"></div>
+    </div>
+  </div>
+</div>
+
+<div id="termsOverlay" class="overlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+    <div class="modalTop">
+      <h2 id="termsTitle" class="modalTitle">利用規約</h2>
+      <div class="pill">確認</div>
+    </div>
+    <div class="modalBody">
+      <div class="termsBox" id="termsText"></div>
+      <div class="modalActions" style="margin-top:14px;">
+        <button id="btnTermsOk" class="btnPrimary">確認しました</button>
+        <button id="btnTermsBack" class="btnGhost">戻る</button>
+      </div>
     </div>
   </div>
 </div>
@@ -295,18 +331,7 @@ const I18N = {
     title: "確認", pill: "退店",
     body: ["退店を記録します。よろしいですか。","You are about to check out. Continue?","将记录离开。继续吗？","퇴장을 기록합니다. 진행할까요?"],
     primary: "退店する", secondary: "やめる"
-  },
-  profileGate: {
-    title: "会員登録", pill: "初回のみ",
-    body: [
-      "COMPASSION WORLDが平和で心地よい世界であり続けるために、初回のみ会員登録へのご協力をお願いします。",
-      "To keep COMPASSION WORLD peaceful and comfortable, we ask for one-time registration.",
-      "为了让COMPASSION WORLD保持平和舒适，我们请求首次登记。",
-      "COMPASSION WORLD가 평화롭고 편안한 곳으로 계속되도록 최초 1회 등록을 부탁드립니다."
-    ],
-    primary: "登録を送信", secondary: "閉じる"
-  },
-  termsTitle: "利用規約",
+  }
 };
 
 const TERMS_TEXT = `第1条 目的
@@ -379,7 +404,19 @@ const btnModalPrimary = document.getElementById("btnModalPrimary");
 const btnModalSecondary = document.getElementById("btnModalSecondary");
 const srLive = document.getElementById("srLive");
 
+const termsOverlay = document.getElementById("termsOverlay");
+const termsText = document.getElementById("termsText");
+const btnTermsOk = document.getElementById("btnTermsOk");
+const btnTermsBack = document.getElementById("btnTermsBack");
+
 let idToken = "";
+let termsAccepted = false;
+
+/* 入力内容を保持して消えないようにする */
+const formState = {
+  last: "", first: "", lastKana: "", firstKana: "",
+  dob: "", phone: "", addr: ""
+};
 
 function setDot(state){
   if (state === "ok") { elDot.style.background = "var(--ok)"; elDot.style.boxShadow = "0 0 0 4px rgba(29,185,84,.18)"; return; }
@@ -405,6 +442,11 @@ function enableButtons(ready){
 function showOverlay(show){
   overlay.classList.toggle("show", !!show);
   overlay.setAttribute("aria-hidden", show ? "false" : "true");
+}
+
+function showTerms(show){
+  termsOverlay.classList.toggle("show", !!show);
+  termsOverlay.setAttribute("aria-hidden", show ? "false" : "true");
 }
 
 function setBusy(on){
@@ -457,9 +499,7 @@ async function gasCall(action, paramsObj){
   p.set("action", action);
   p.set("id_token", idToken);
   p.set("t", String(Date.now()));
-  if (paramsObj) {
-    for (const k of Object.keys(paramsObj)) p.set(k, String(paramsObj[k]));
-  }
+  if (paramsObj) for (const k of Object.keys(paramsObj)) p.set(k, String(paramsObj[k]));
   const url = GAS_EXEC_URL + "?" + p.toString();
   return await jsonp(url);
 }
@@ -487,17 +527,18 @@ async function ensureProfileOrShowForm(){
 }
 
 function renderProfileForm(){
-  modalTitle.textContent = I18N.profileGate.title;
-  modalPill.textContent = I18N.profileGate.pill;
-  modalJa.textContent = I18N.profileGate.body[0];
-  modalEn.textContent = I18N.profileGate.body[1];
-  modalZh.textContent = I18N.profileGate.body[2];
-  modalKo.textContent = I18N.profileGate.body[3];
-
-  btnModalPrimary.textContent = "登録を送信";
-  btnModalSecondary.textContent = "閉じる";
-  btnModalPrimary.disabled = false;
-  btnModalSecondary.disabled = false;
+  setModal({
+    title: "会員登録",
+    pill: "初回のみ",
+    body: [
+      "初回のみ、会員登録へのご協力をお願いします。",
+      "One-time registration is required.",
+      "首次需要登记。",
+      "최초 1회 등록이 필요합니다."
+    ],
+    primary: "登録を送信",
+    secondary: "閉じる"
+  });
 
   modalForm.style.display = "block";
   modalForm.innerHTML = `
@@ -541,7 +582,7 @@ function renderProfileForm(){
       </div>
 
       <div class="checkRow" id="w_consent">
-        <input id="f_consent" type="checkbox" disabled />
+        <input id="f_consent" type="checkbox" ${termsAccepted ? "" : "disabled"} ${termsAccepted ? "checked" : ""} />
         <div>
           本システムが、COMPASSION WORLDの平和な世界を守るために利用されることに同意します
           <div class="linkBtn" id="openTermsBtn">利用規約を表示する</div>
@@ -550,33 +591,57 @@ function renderProfileForm(){
     </div>
   `;
 
-  const openTermsBtn = document.getElementById("openTermsBtn");
-  openTermsBtn.addEventListener("click", () => openTermsPopup_());
+  const fLast = document.getElementById("f_last");
+  const fFirst = document.getElementById("f_first");
+  const fLastKana = document.getElementById("f_last_kana");
+  const fFirstKana = document.getElementById("f_first_kana");
+  const fDob = document.getElementById("f_dob");
+  const fPhone = document.getElementById("f_phone");
+  const fAddr = document.getElementById("f_addr");
+  const fConsent = document.getElementById("f_consent");
+
+  fLast.value = formState.last;
+  fFirst.value = formState.first;
+  fLastKana.value = formState.lastKana;
+  fFirstKana.value = formState.firstKana;
+  fDob.value = formState.dob;
+  fPhone.value = formState.phone;
+  fAddr.value = formState.addr;
+
+  const bind = (el, key) => el.addEventListener("input", () => { formState[key] = el.value; });
+  bind(fLast, "last");
+  bind(fFirst, "first");
+  bind(fLastKana, "lastKana");
+  bind(fFirstKana, "firstKana");
+  bind(fDob, "dob");
+  bind(fPhone, "phone");
+  bind(fAddr, "addr");
+
+  document.getElementById("openTermsBtn").onclick = () => {
+    termsText.textContent = TERMS_TEXT;
+    showTerms(true);
+  };
 
   btnModalPrimary.onclick = async () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
-    const last = document.getElementById("f_last").value.trim();
-    const first = document.getElementById("f_first").value.trim();
-    const lastKana = document.getElementById("f_last_kana").value.trim();
-    const firstKana = document.getElementById("f_first_kana").value.trim();
-    const dob = document.getElementById("f_dob").value.trim();
-    const phone = document.getElementById("f_phone").value.trim();
-    const addr = document.getElementById("f_addr").value.trim();
-    const consent = document.getElementById("f_consent").checked;
+    const last = fLast.value.trim();
+    const first = fFirst.value.trim();
+    const lastKana = fLastKana.value.trim();
+    const firstKana = fFirstKana.value.trim();
+    const dob = fDob.value.trim();
+    const phone = fPhone.value.trim();
+    const addr = fAddr.value.trim();
+    const consent = fConsent.checked;
 
-    const fields = [
-      ["w_last", !!last],
-      ["w_first", !!first],
-      ["w_last_kana", !!lastKana],
-      ["w_first_kana", !!firstKana],
-      ["w_dob", !!dob],
-      ["w_phone", !!phone],
-      ["w_addr", !!addr],
-    ];
-    for (const [wrap, ok] of fields) {
-      document.getElementById(wrap).classList.toggle("err", !ok);
-    }
+    const setErr = (id, on) => document.getElementById(id).classList.toggle("err", !!on);
+    setErr("w_last", !last);
+    setErr("w_first", !first);
+    setErr("w_last_kana", !lastKana);
+    setErr("w_first_kana", !firstKana);
+    setErr("w_dob", !dob);
+    setErr("w_phone", !phone);
+    setErr("w_addr", !addr);
     document.getElementById("w_consent").classList.toggle("err", !consent);
 
     if (!last || !first || !lastKana || !firstKana || !dob || !phone || !addr || !consent) {
@@ -647,47 +712,29 @@ function renderProfileForm(){
   };
 }
 
-function openTermsPopup_(){
-  const cfg = {
-    title: I18N.termsTitle,
-    pill: "確認",
-    body: ["利用規約を確認してください。", "Please review the terms.", "请阅读条款。", "약관을 확인해 주세요."],
-    primary: "確認しました",
-    secondary: "閉じる"
-  };
-  setModal(cfg);
+/* 規約画面のボタン */
+btnTermsOk.onclick = () => {
+  termsAccepted = true;
+  showTerms(false);
 
-  modalForm.style.display = "block";
-  modalForm.innerHTML = `
-    <div class="form">
-      <div class="field">
-        <label>利用規約</label>
-        <textarea readonly style="min-height:220px; white-space:pre-wrap;">${escapeHtml_(TERMS_TEXT)}</textarea>
-      </div>
-    </div>
-  `;
+  const c = document.getElementById("f_consent");
+  if (c) {
+    c.disabled = false;
+    c.checked = true;
+  }
 
-  btnModalPrimary.onclick = () => {
-    const c = document.getElementById("f_consent");
-    if (c) {
-      c.disabled = false;
-      c.checked = true;
-    }
-    showOverlay(true);
-    renderProfileForm();
-  };
-  btnModalSecondary.onclick = () => {
-    showOverlay(true);
-    renderProfileForm();
-  };
-}
+  setDot("ok");
+  setStatusLines([
+    "利用規約を確認しました。同意にチェックできるようになりました。",
+    "Terms confirmed. Consent checkbox is now enabled.",
+    "已确认条款。同意选项已启用。",
+    "약관 확인 완료. 동의 체크가 활성화되었습니다."
+  ]);
+};
 
-function escapeHtml_(s){
-  return String(s || "")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;");
-}
+btnTermsBack.onclick = () => {
+  showTerms(false);
+};
 
 async function callActionWithConfirm(action){
   showOverlay(true);
@@ -754,10 +801,8 @@ async function init(){
 
   try{
     await liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true });
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+
     idToken = liff.getIDToken() || "";
     if (!idToken) {
       elBadge.textContent = "エラー";
@@ -781,9 +826,7 @@ btnOut.addEventListener("click", () => callActionWithConfirm("check_out"));
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") {
     try{
-      if (window.liff && liff.isLoggedIn()) {
-        idToken = liff.getIDToken() || idToken;
-      }
+      if (window.liff && liff.isLoggedIn()) idToken = liff.getIDToken() || idToken;
       await ensureProfileOrShowForm();
     } catch(e){}
   }
