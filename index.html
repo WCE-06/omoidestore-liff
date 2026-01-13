@@ -302,7 +302,7 @@ Buttons are disabled during processing. Please follow the on-screen instructions
 
 <script>
 const LIFF_ID = "2008818718-fOO0L9iV";
-const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbzbu1TRotcgjS0beSRhZqYIznvSgbyMZ0UpsQZ9Pgw5uUGkO6Smf9HdP1O-cLqLnvvz/exec";
+const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyunCNP8hXuPOA7LZ1JiCimAOdNRhqByFNRzJ9FyeeIByEyY91_b3Mh5_bCrZn3pB3g/exec";
 
 const I18N = {
   ready: [
@@ -689,7 +689,6 @@ function renderProfileForm(){
     if (submitting) return;
     submitting = true;
 
-    // 送信直後の可視フィードバック
     window.scrollTo({ top: 0, behavior: "smooth" });
     setBusy(true);
     elBadge.textContent = "送信中";
@@ -721,12 +720,8 @@ function renderProfileForm(){
 
     const isKatakana = (v) => /^[ァ-ヶー]+$/.test(v);
 
-    if (!isKatakana(lastKana)) {
-      setErr("w_last_kana", true);
-    }
-    if (!isKatakana(firstKana)) {
-      setErr("w_first_kana", true);
-    }
+    if (!isKatakana(lastKana)) setErr("w_last_kana", true);
+    if (!isKatakana(firstKana)) setErr("w_first_kana", true);
 
     if (!isKatakana(lastKana) || !isKatakana(firstKana)) {
       setDot("error");
@@ -736,13 +731,16 @@ function renderProfileForm(){
         "假名必须为片假名。",
         "가나는 가타카나로 입력해 주세요."
       ]);
+      setBusy(false);
+      btnModalPrimary.disabled = false;
+      btnModalSecondary.disabled = false;
+      elBadge.textContent = "準備中";
+      submitting = false;
       return;
     }
 
     setErr("w_last", !last);
     setErr("w_first", !first);
-    setErr("w_last_kana", !lastKana || !isKatakana(lastKana));
-    setErr("w_first_kana", !firstKana || !isKatakana(firstKana));
     setErr("w_dob", !dob);
     setErr("w_phone", !phone);
     setErr("w_zip", !zip);
@@ -757,6 +755,11 @@ function renderProfileForm(){
         "有未填写项目。未填写项将以红色标示。",
         "미입력 항목이 있습니다. 미입력 항목이 빨간색으로 표시됩니다."
       ]);
+      setBusy(false);
+      btnModalPrimary.disabled = false;
+      btnModalSecondary.disabled = false;
+      elBadge.textContent = "準備中";
+      submitting = false;
       return;
     }
 
@@ -820,13 +823,11 @@ function renderProfileForm(){
   };
 
   document.getElementById("f_zip").addEventListener("blur", async () => {
-    const zip = document.getElementById("f_zip").value.replace(/\D/g, "");
-    if (zip.length !== 7) return;
+    const zip7 = document.getElementById("f_zip").value.replace(/\D/g, "");
+    if (zip7.length !== 7) return;
 
     try {
-      const res = await fetch(
-        "https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + zip
-      );
+      const res = await fetch("https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + zip7);
       const data = await res.json();
       if (data && data.results && data.results.length) {
         const r = data.results[0];
@@ -837,9 +838,7 @@ function renderProfileForm(){
           formState.addr = addr;
         }
       }
-    } catch(e) {
-      // 失敗時は手入力に任せる
-    }
+    } catch(e) {}
   });
 }
 
@@ -862,9 +861,7 @@ btnTermsOk.onclick = () => {
   ]);
 };
 
-btnTermsBack.onclick = () => {
-  showTerms(false);
-};
+btnTermsBack.onclick = () => { showTerms(false); };
 
 async function callActionWithConfirm(action){
   showOverlay(true);
@@ -917,10 +914,7 @@ async function callActionWithConfirm(action){
     }
   };
 
-  btnModalSecondary.onclick = () => {
-    showOverlay(false);
-    enableButtons(true);
-  };
+  btnModalSecondary.onclick = () => { showOverlay(false); enableButtons(true); };
 }
 
 async function init(){
