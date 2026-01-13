@@ -540,66 +540,17 @@ function hiraToKata(str){
   return str.replace(/[\u3041-\u3096]/g, (m) => String.fromCharCode(m.charCodeAt(0) + 0x60));
 }
 
-function isKatakanaOnly(str){
-  if (!str) return false;
-  const s = str.replace(/\s+/g, "");
-  return /^[ァ-ヶー・＝＝゛゜ヴヵヶ]+$/.test(s);
-}
-
 function normalizeKanaInput(str){
   let s = String(str || "");
   s = hiraToKata(s);
-  s = s.replace(/[ﾞ]/g, "゛").replace(/[ﾟ]/g, "゜");
-  s = s.replace(/　/g, " ").trim();
-  return s;
+  s = s.replace(/　/g, " ");
+  s = s.replace(/\s+/g, "");
+  return s.trim();
 }
 
 function onlyDigits7(zip){
   const z = String(zip || "").replace(/[^0-9]/g, "");
   return z.length === 7 ? z : "";
-}
-
-async function fillAddressFromZip(zip7, fAddr){
-  if (!zip7) return;
-  const url = "https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + encodeURIComponent(zip7);
-  try{
-    const r = await jsonp(url);
-    if (r && Number(r.status) === 200 && r.results && r.results[0]) {
-      const a = r.results[0];
-      const base = (a.address1 || "") + (a.address2 || "") + (a.address3 || "");
-      const cur = (fAddr.value || "").trim();
-      if (!cur || cur === formState.addr.trim()) {
-        fAddr.value = base;
-        formState.addr = base;
-      } else if (!cur.startsWith(base)) {
-        fAddr.value = base + cur;
-        formState.addr = fAddr.value;
-      }
-      setDot("ok");
-      setStatusLines([
-        "郵便番号から住所を入力しました。番地以降をご確認ください。",
-        "Address filled from postal code. Please confirm the rest.",
-        "已根据邮编填写地址。请确认门牌号等。",
-        "우편번호로 주소를 입력했습니다. 번지 이후를 확인해 주세요."
-      ]);
-    } else {
-      setDot("error");
-      setStatusLines([
-        (r && r.message) ? ("郵便番号の検索に失敗しました: " + r.message) : "郵便番号の検索に失敗しました。",
-        "Postal code lookup failed.",
-        "邮编查询失败。",
-        "우편번호 조회에 실패했습니다."
-      ]);
-    }
-  }catch(e){
-    setDot("error");
-    setStatusLines([
-      "郵便番号の検索で通信エラーが発生しました。",
-      "Network error during postal code lookup.",
-      "邮编查询发生网络错误。",
-      "우편번호 조회 중 통신 오류가 발생했습니다."
-    ]);
-  }
 }
 
 function renderProfileForm(){
@@ -643,12 +594,14 @@ function renderProfileForm(){
       <div class="grid2">
         <div class="field" id="w_last_kana">
           <label>セイ</label>
-          <input id="f_last_kana" type="text" inputmode="kana" />
+          <input id="f_last_kana" type="text" inputmode="kana"
+            pattern="^[ァ-ヶー]+$" placeholder="セイ（カタカナ）" />
           <div class="help">カタカナで入力してください</div>
         </div>
         <div class="field" id="w_first_kana">
           <label>メイ</label>
-          <input id="f_first_kana" type="text" inputmode="kana" />
+          <input id="f_first_kana" type="text" inputmode="kana"
+            pattern="^[ァ-ヶー]+$" placeholder="メイ（カタカナ）" />
           <div class="help">カタカナで入力してください</div>
         </div>
       </div>
@@ -665,9 +618,9 @@ function renderProfileForm(){
       </div>
 
       <div class="field" id="w_zip">
-        <label>郵便番号</label>
-        <input id="f_zip" type="tel" inputmode="numeric" placeholder="例 1234567" />
-        <div class="help">ハイフン無しで7桁入力すると住所が自動入力されます</div>
+        <label>郵便番号（ハイフンなし）</label>
+        <input id="f_zip" type="text" inputmode="numeric"
+          placeholder="例 4091501" />
       </div>
 
       <div class="field" id="w_addr">
@@ -712,6 +665,7 @@ function renderProfileForm(){
   bind(fDob, "dob");
   bind(fPhone, "phone");
   bind(fAddr, "addr");
+  bind(fZip, "zip");
 
   fLastKana.addEventListener("input", () => {
     const v = normalizeKanaInput(fLastKana.value);
@@ -722,16 +676,6 @@ function renderProfileForm(){
     const v = normalizeKanaInput(fFirstKana.value);
     if (v !== fFirstKana.value) fFirstKana.value = v;
     formState.firstKana = fFirstKana.value;
-  });
-
-  fZip.addEventListener("input", async () => {
-    const z = String(fZip.value || "").replace(/[^0-9]/g, "");
-    if (z !== fZip.value) fZip.value = z;
-    formState.zip = fZip.value;
-    const zip7 = onlyDigits7(fZip.value);
-    if (zip7) {
-      await fillAddressFromZip(zip7, fAddr);
-    }
   });
 
   document.getElementById("openTermsBtn").onclick = () => {
@@ -745,20 +689,22 @@ function renderProfileForm(){
     if (submitting) return;
     submitting = true;
 
+    // 送信直後の可視フィードバック
     window.scrollTo({ top: 0, behavior: "smooth" });
-    try{ modalBody.scrollTo({ top: 0, behavior: "smooth" }); }catch(e){}
-
-    setDot("busy");
+    setBusy(true);
     elBadge.textContent = "送信中";
+    setDot("busy");
     setStatusLines([
-      "しばらくお待ちください。送信処理を行っています。",
-      "Please wait. Sending your registration.",
-      "请稍候。正在提交登记信息。",
-      "잠시만 기다려 주세요. 등록 정보를 전송 중입니다."
+      "しばらくお待ちください。登録処理を行っています。",
+      "Please wait. Processing your registration.",
+      "请稍候。正在处理注册。",
+      "잠시만 기다려 주세요. 등록 처리 중입니다."
     ]);
 
     btnModalPrimary.disabled = true;
     btnModalSecondary.disabled = true;
+
+    try{ modalBody.scrollTo({ top: 0, behavior: "smooth" }); }catch(e){}
 
     const last = fLast.value.trim();
     const first = fFirst.value.trim();
@@ -773,38 +719,44 @@ function renderProfileForm(){
     if (lastKana !== fLastKana.value) fLastKana.value = lastKana;
     if (firstKana !== fFirstKana.value) fFirstKana.value = firstKana;
 
-    const kanaOk = isKatakanaOnly(lastKana) && isKatakanaOnly(firstKana);
+    const isKatakana = (v) => /^[ァ-ヶー]+$/.test(v);
+
+    if (!isKatakana(lastKana)) {
+      setErr("w_last_kana", true);
+    }
+    if (!isKatakana(firstKana)) {
+      setErr("w_first_kana", true);
+    }
+
+    if (!isKatakana(lastKana) || !isKatakana(firstKana)) {
+      setDot("error");
+      setStatusLines([
+        "カナはカタカナで入力してください。",
+        "Kana must be in Katakana.",
+        "假名必须为片假名。",
+        "가나는 가타카나로 입력해 주세요."
+      ]);
+      return;
+    }
 
     setErr("w_last", !last);
     setErr("w_first", !first);
-    setErr("w_last_kana", !lastKana || !isKatakanaOnly(lastKana));
-    setErr("w_first_kana", !firstKana || !isKatakanaOnly(firstKana));
+    setErr("w_last_kana", !lastKana || !isKatakana(lastKana));
+    setErr("w_first_kana", !firstKana || !isKatakana(firstKana));
     setErr("w_dob", !dob);
     setErr("w_phone", !phone);
     setErr("w_zip", !zip);
     setErr("w_addr", !addr);
     document.getElementById("w_consent").classList.toggle("err", !consent);
 
-    if (!last || !first || !lastKana || !firstKana || !kanaOk || !dob || !phone || !zip || !addr || !consent) {
+    if (!last || !first || !lastKana || !firstKana || !dob || !phone || !zip || !addr || !consent) {
       setDot("error");
-      if (!kanaOk) {
-        setStatusLines([
-          "セイ・メイはカタカナで入力してください。未入力欄は赤く表示されます。",
-          "Please enter katakana for name (kana). Missing fields are highlighted in red.",
-          "请用片假名输入姓名读音。未填写项将以红色标示。",
-          "이름(가나)은 가타카나로 입력해 주세요. 미입력 항목이 빨간색으로 표시됩니다."
-        ]);
-      } else {
-        setStatusLines([
-          "未入力の項目があります。未入力欄が赤く表示されます。",
-          "Some fields are missing. Missing fields are highlighted in red.",
-          "有未填写项目。未填写项将以红色标示。",
-          "미입력 항목이 있습니다. 미입력 항목이 빨간색으로 표시됩니다."
-        ]);
-      }
-      btnModalPrimary.disabled = false;
-      btnModalSecondary.disabled = false;
-      submitting = false;
+      setStatusLines([
+        "未入力の項目があります。未入力欄が赤く表示されます。",
+        "Some fields are missing. Missing fields are highlighted in red.",
+        "有未填写项目。未填写项将以红色标示。",
+        "미입력 항목이 있습니다. 미입력 항목이 빨간색으로 표시됩니다."
+      ]);
       return;
     }
 
@@ -847,10 +799,11 @@ function renderProfileForm(){
       elBadge.textContent = "エラー";
       setStatusLines(I18N.netErr);
     } finally {
+      setBusy(false);
       btnModalPrimary.disabled = false;
       btnModalSecondary.disabled = false;
+      elBadge.textContent = "準備中";
       submitting = false;
-      if (elBadge.textContent === "送信中") elBadge.textContent = "準備中";
     }
   };
 
@@ -865,6 +818,29 @@ function renderProfileForm(){
     ]);
     enableButtons(false);
   };
+
+  document.getElementById("f_zip").addEventListener("blur", async () => {
+    const zip = document.getElementById("f_zip").value.replace(/\D/g, "");
+    if (zip.length !== 7) return;
+
+    try {
+      const res = await fetch(
+        "https://zipcloud.ibsnet.co.jp/api/search?zipcode=" + zip
+      );
+      const data = await res.json();
+      if (data && data.results && data.results.length) {
+        const r = data.results[0];
+        const addr = (r.address1 || "") + (r.address2 || "") + (r.address3 || "");
+        const addrEl = document.getElementById("f_addr");
+        if (!addrEl.value.trim()) {
+          addrEl.value = addr;
+          formState.addr = addr;
+        }
+      }
+    } catch(e) {
+      // 失敗時は手入力に任せる
+    }
+  });
 }
 
 btnTermsOk.onclick = () => {
